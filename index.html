@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lista de Rodaje</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#B23A31">
+<link rel="apple-touch-icon" href="./icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rodaje">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    color-scheme: light dark;
+    --bg:#FAF7F2; --surface:#FFFFFF; --row:#F4EEE4; --ink:#211C16; --ink-dim:#6E655A;
+    --border:#E4DCCF; --accent:#B23A31; --accent-ink:#FFF8F3;
+    --sp-1:#2F5C78; --sp-2:#3F6B3F; --sp-3:#92610A; --sp-4:#6249A0; --sp-5:#9C3D5C; --sp-6:#206E6E;
+    --shadow:0 1px 2px rgba(33,28,22,.06), 0 4px 14px rgba(33,28,22,.05);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17140F; --surface:#1E1A14; --row:#241F18; --ink:#EDE7DE; --ink-dim:#A79E8F;
+      --border:#332C22; --accent:#E2665C; --accent-ink:#1A1310;
+      --sp-1:#7FB8DA; --sp-2:#8FC58F; --sp-3:#E3B355; --sp-4:#B39CE0; --sp-5:#E091AC; --sp-6:#6ED4D4;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17140F; --surface:#1E1A14; --row:#241F18; --ink:#EDE7DE; --ink-dim:#A79E8F;
+    --border:#332C22; --accent:#E2665C; --accent-ink:#1A1310;
+    --sp-1:#7FB8DA; --sp-2:#8FC58F; --sp-3:#E3B355; --sp-4:#B39CE0; --sp-5:#E091AC; --sp-6:#6ED4D4;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .display{font-family:inherit; text-transform:uppercase; letter-spacing:.01em;}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-variant-numeric:tabular-nums;}
+  [hidden]{display:none!important;}
+
+  header{flex:0 0 auto; background:var(--surface); border-bottom:1px solid var(--border); padding:14px 16px 12px;}
+  .head-row{display:flex; align-items:center; gap:10px;}
+  .icon-btn{flex:0 0 auto; background:none; border:none; padding:4px; color:var(--ink); cursor:pointer; display:flex; align-items:center;}
+  .h-title{font-weight:700; font-size:1.2rem; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1 1 auto; min-width:0;}
+  .h-title-input{font:inherit; font-weight:700; font-size:1.2rem; letter-spacing:.2px; flex:1 1 auto; min-width:0; background:var(--row); border:1px solid var(--border); border-radius:6px; color:var(--ink); padding:2px 7px;}
+  .edit-btn{flex:0 0 auto; background:none; border:none; padding:5px; color:var(--ink-dim); cursor:pointer; border-radius:7px;}
+  .edit-btn:active{background:var(--row);}
+  .item-head{display:flex; align-items:center; gap:6px; margin-bottom:2px;}
+  .item-head .tag{margin-bottom:0;}
+  .item-head .edit-btn{margin-left:auto; padding:2px 4px;}
+  .edit-area{width:100%; min-height:52px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--ink); font-family:inherit; font-size:.97rem; line-height:1.42; padding:7px 9px; resize:vertical;}
+  .edit-actions{display:flex; gap:8px; margin-top:7px;}
+  .edit-actions button{font-family:inherit; font-size:.8rem; font-weight:600; border:none; border-radius:8px; padding:6px 13px; cursor:pointer;}
+  .edit-actions .save{background:var(--accent); color:var(--accent-ink);}
+  .edit-actions .cancel{background:var(--row); color:var(--ink);}
+  .count{font-size:.8rem; color:var(--ink-dim); white-space:nowrap; flex:0 0 auto;}
+  .bar{height:5px; border-radius:3px; background:var(--row); margin-top:10px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--accent); border-radius:3px; transition:width .25s ease;}
+  .meta{font-size:.78rem; color:var(--ink-dim); margin-top:6px;}
+  .brand-sub{font-size:.78rem; color:var(--ink-dim); margin-top:3px;}
+
+  main{flex:1 1 auto; overflow-y:auto; padding:10px 12px 90px; position:relative;}
+  .view{max-width:560px; margin-inline:auto;}
+
+  ul.projects{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .proj-card{display:flex; align-items:flex-start; gap:11px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 13px; box-shadow:var(--shadow); cursor:pointer;}
+  .proj-card.done{background:var(--row);}
+  .proj-card .info{flex:1 1 auto; min-width:0;}
+  .proj-card .t{font-size:1rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .proj-card.done .t{color:var(--ink-dim); text-decoration:line-through; text-decoration-color:var(--border);}
+  .proj-card .d{font-size:.78rem; color:var(--ink-dim); margin-top:2px; display:flex; align-items:center; gap:8px;}
+  .mini-bar{flex:1 1 auto; max-width:80px; height:4px; border-radius:2px; background:var(--row); overflow:hidden;}
+  .mini-bar i{display:block; height:100%; background:var(--accent);}
+  .del-btn{flex:0 0 auto; background:none; border:none; padding:6px; color:var(--ink-dim); cursor:pointer; border-radius:8px; margin:-4px -4px 0 0;}
+  .del-btn:active{background:var(--row);}
+  .confirm-row{display:flex; align-items:center; gap:8px; flex:1 1 auto;}
+  .confirm-row span{font-size:.85rem; color:var(--ink); flex:1 1 auto;}
+  .confirm-row button{font-family:inherit; font-size:.8rem; font-weight:600; border:none; border-radius:8px; padding:7px 12px; cursor:pointer;}
+  .confirm-row .yes{background:var(--accent); color:var(--accent-ink);}
+  .confirm-row .no{background:var(--row); color:var(--ink);}
+  .hint{color:var(--ink-dim); font-size:.82rem; line-height:1.5; text-align:center; margin:22px auto 0; max-width:300px;}
+
+  input[type="checkbox"].chk{appearance:none; -webkit-appearance:none; width:22px; height:22px; border-radius:7px; border:2px solid var(--ink-dim); background:var(--row); display:block; margin:0; cursor:pointer; position:relative; flex:0 0 auto;}
+  input[type="checkbox"].chk:checked{background:var(--accent); border-color:var(--accent);}
+  input[type="checkbox"].chk:checked::after{content:""; position:absolute; left:5px; top:1px; width:7px; height:12px; border:solid var(--accent-ink); border-width:0 2px 2px 0; transform:rotate(45deg);}
+
+  ul.items{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px;}
+  .item{display:flex; align-items:flex-start; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 12px; cursor:pointer; user-select:none; box-shadow:var(--shadow);}
+  .idx{flex:0 0 auto; font-size:.78rem; color:var(--ink-dim); padding-top:3px; width:1.4em;}
+  .content{flex:1 1 auto; min-width:0; border-left:3px solid var(--line, var(--border)); padding-left:10px;}
+  .tag{display:block; font-weight:700; font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--tagcolor, var(--ink-dim)); margin-bottom:2px;}
+  .text{margin:0; font-size:.97rem; line-height:1.42; color:var(--txtcolor, var(--ink));}
+  .item[data-type="accion"] .text{color:var(--ink-dim); font-style:italic;}
+  .item.checked{background:var(--row);}
+  .item.checked .text{color:var(--ink-dim); text-decoration:line-through; text-decoration-thickness:1.5px; text-decoration-color:var(--border);}
+  .item.checked .tag{opacity:.65;}
+  .item.checked .idx{opacity:.5;}
+
+  footer{flex:0 0 auto; background:var(--surface); border-top:1px solid var(--border);}
+  .legend-toggle{width:100%; background:none; border:none; padding:9px 16px; display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink-dim); font-size:.76rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
+  .legend{display:none; flex-wrap:wrap; gap:8px 14px; padding:0 16px 12px; max-width:560px; margin-inline:auto;}
+  .legend.open{display:flex;}
+  .legend .who{display:flex; align-items:center; gap:6px; font-size:.8rem; color:var(--ink);}
+  .legend .dot{width:9px; height:9px; border-radius:50%; flex:0 0 auto;}
+
+  .fab{
+    position:fixed; right:18px; bottom:calc(18px + env(safe-area-inset-bottom,0px));
+    width:52px; height:52px; border-radius:16px; background:var(--accent); color:var(--accent-ink);
+    border:none; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-size:1.6rem; line-height:1; z-index:5;
+  }
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(20,16,10,.5); display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:20;}
+  .modal-overlay.open{opacity:1; pointer-events:auto;}
+  .sheet{width:100%; max-width:560px; max-height:86vh; background:var(--surface); border-radius:18px 18px 0 0; padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:10px; transform:translateY(12px); transition:transform .18s ease; overflow-y:auto;}
+  .modal-overlay.open .sheet{transform:translateY(0);}
+  .sheet h2{font-size:1.05rem; font-weight:700; letter-spacing:.02em; margin:0 0 2px;}
+  .sheet p{font-size:.83rem; color:var(--ink-dim); line-height:1.5; margin:0;}
+  .sheet textarea{
+    width:100%; min-height:160px; border-radius:10px; border:1px solid var(--border); background:var(--row);
+    color:var(--ink); font-family:ui-monospace,monospace; font-size:.82rem; padding:10px; resize:vertical;
+  }
+  .sheet .err{color:var(--accent); font-size:.82rem; min-height:1.1em;}
+  .sheet-actions{display:flex; gap:10px; justify-content:flex-end;}
+  .sheet-actions button{font-family:inherit; font-size:.88rem; font-weight:600; border:none; border-radius:10px; padding:10px 16px; cursor:pointer;}
+  .sheet-actions .primary{background:var(--accent); color:var(--accent-ink);}
+  .sheet-actions .ghost{background:var(--row); color:var(--ink);}
+
+  .offline-pill{
+    position:fixed; top:calc(10px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%) translateY(-140%);
+    background:var(--ink); color:var(--bg); font-size:.76rem; font-weight:600; padding:6px 12px; border-radius:999px;
+    transition:transform .25s ease; z-index:30; box-shadow:var(--shadow);
+  }
+  .offline-pill.show{transform:translateX(-50%) translateY(0);}
+
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--border); border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="offline-pill" id="offlinePill">sin conexión — viendo datos guardados</div>
+
+<header>
+  <div class="head-row">
+    <button class="icon-btn" id="backBtn" hidden aria-label="volver">
+      <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M12.5 4l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <span class="h-title display" id="hTitle">Lista de Rodaje</span>
+    <input class="h-title-input" id="hTitleInput" hidden>
+    <button class="icon-btn" id="editTitleBtn" hidden aria-label="editar título">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </button>
+    <span class="count mono" id="hCount" hidden>0/0</span>
+  </div>
+  <div class="bar" id="hBar" hidden><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+  <div class="meta" id="hMeta" hidden></div>
+  <div class="brand-sub" id="hSub">tus checklists de rodaje · funciona sin internet</div>
+</header>
+
+<main>
+  <div class="view" id="viewHome">
+    <ul class="projects" id="projectsList"></ul>
+    <div class="hint" id="homeHint" hidden>Todavía no cargaste ningún proyecto. Tocá el botón + y pegá lo que te pase Claude en el chat.</div>
+  </div>
+
+  <div class="view" id="viewDetail" hidden>
+    <ul class="items" id="items"></ul>
+  </div>
+
+  <button class="fab" id="fab" aria-label="nuevo proyecto">+</button>
+</main>
+
+<footer id="footer" hidden>
+  <button class="legend-toggle" id="legendToggle">Quién habla ▾</button>
+  <div class="legend" id="legend"></div>
+</footer>
+
+<div class="modal-overlay" id="importOverlay">
+  <div class="sheet">
+    <h2>Nuevo proyecto</h2>
+    <p>Pegá acá el bloque de datos que te pasa Claude después de mandarle tu guion en el chat.</p>
+    <textarea id="importText" placeholder="Pegá el bloque acá..."></textarea>
+    <div class="err" id="importErr"></div>
+    <div class="sheet-actions">
+      <button class="ghost" id="importCancel">Cancelar</button>
+      <button class="primary" id="importOk">Cargar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var STORE_KEY = "rodaje.projects.v1";
+
+  var DEMO = {
+    id: "ejemplo-tip-produccion",
+    title: "Ejemplo — probá marcando tomas",
+    createdAt: "2026-09-01T12:00:00.000Z",
+    done: false,
+    speakers: [{name:"NARRADOR", color:"sp-1"}, {name:"CLIENTE", color:"sp-3"}],
+    items: [
+      {id:"i1", order:1, type:"accion", speaker:"", color:"", text:"Plano abierto del estudio, cámara en mano, luz de tarde.", checked:false},
+      {id:"i2", order:2, type:"dialogo", speaker:"NARRADOR", color:"sp-1", text:"Grabar bien no es tener la cámara más cara.", checked:false},
+      {id:"i3", order:3, type:"accion", speaker:"", color:"", text:"Corte a detalle: micrófono, tarjeta de memoria, batería cargando.", checked:false},
+      {id:"i4", order:4, type:"dialogo", speaker:"NARRADOR", color:"sp-1", text:"Es hacer estos tres chequeos antes de darle rec.", checked:false},
+      {id:"i5", order:5, type:"dialogo", speaker:"CLIENTE", color:"sp-3", text:"Con Kev grabamos todo en una tarde y quedó mejor de lo que esperaba.", checked:false},
+      {id:"i6", order:6, type:"accion", speaker:"", color:"", text:"Plano final: claqueta cerrando, texto en pantalla con el tip.", checked:false}
+    ]
+  };
+
+  function uid(){ return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  function loadProjects(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return [DEMO];
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) && parsed.length ? parsed : [DEMO];
+    }catch(e){ return [DEMO]; }
+  }
+  function saveProjects(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(projects)); }catch(e){ /* almacenamiento lleno o bloqueado */ }
+  }
+
+  var els = {
+    backBtn: document.getElementById('backBtn'),
+    hTitle: document.getElementById('hTitle'),
+    hCount: document.getElementById('hCount'),
+    hBar: document.getElementById('hBar'),
+    barFill: document.getElementById('barFill'),
+    hMeta: document.getElementById('hMeta'),
+    hSub: document.getElementById('hSub'),
+    viewHome: document.getElementById('viewHome'),
+    viewDetail: document.getElementById('viewDetail'),
+    projectsList: document.getElementById('projectsList'),
+    homeHint: document.getElementById('homeHint'),
+    items: document.getElementById('items'),
+    footer: document.getElementById('footer'),
+    legendToggle: document.getElementById('legendToggle'),
+    legend: document.getElementById('legend'),
+    fab: document.getElementById('fab'),
+    importOverlay: document.getElementById('importOverlay'),
+    importText: document.getElementById('importText'),
+    importErr: document.getElementById('importErr'),
+    importCancel: document.getElementById('importCancel'),
+    importOk: document.getElementById('importOk'),
+    offlinePill: document.getElementById('offlinePill'),
+    editTitleBtn: document.getElementById('editTitleBtn'),
+    hTitleInput: document.getElementById('hTitleInput')
+  };
+
+  var projects = loadProjects();
+  var currentId = null;
+  var confirmingDeleteId = null;
+  var editingItemId = null;
+  var editingTitle = false;
+
+  function fmtDate(iso){
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString('es-BO', {day:'numeric', month:'short'}) + ' · ' +
+             d.toLocaleTimeString('es-BO', {hour:'2-digit', minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+  function getById(id){ for (var i=0;i<projects.length;i++) if (projects[i].id===id) return projects[i]; return null; }
+  function sortedProjects(){ return projects.slice().sort(function(a,b){ return new Date(b.createdAt)-new Date(a.createdAt); }); }
+
+  function go(id){ location.hash = id ? ('/p/' + id) : '/'; }
+  window.addEventListener('hashchange', function(){ currentId = idFromHash(); render(); });
+  function idFromHash(){ var m = /^#\/p\/(.+)$/.exec(location.hash); return m ? decodeURIComponent(m[1]) : null; }
+  currentId = idFromHash();
+
+  function render(){
+    var proj = currentId ? getById(currentId) : null;
+    if (proj){
+      els.backBtn.hidden = false;
+      els.editTitleBtn.hidden = false;
+      els.hCount.hidden = false;
+      els.hBar.hidden = false;
+      els.hMeta.hidden = false;
+      els.hSub.hidden = true;
+      els.footer.hidden = false;
+      els.fab.hidden = true;
+      els.viewHome.hidden = true;
+      els.viewDetail.hidden = false;
+
+      if (editingTitle){
+        els.hTitle.hidden = true;
+        els.hTitleInput.hidden = false;
+        els.hTitleInput.value = proj.title;
+        els.hTitleInput.focus();
+        els.hTitleInput.select();
+      } else {
+        els.hTitle.hidden = false;
+        els.hTitleInput.hidden = true;
+        els.hTitle.textContent = proj.title;
+      }
+      renderDetail(proj);
+    } else {
+      editingTitle = false;
+      els.backBtn.hidden = true;
+      els.editTitleBtn.hidden = true;
+      els.hTitle.hidden = false;
+      els.hTitleInput.hidden = true;
+      els.hTitle.textContent = 'Lista de Rodaje';
+      els.hCount.hidden = true;
+      els.hBar.hidden = true;
+      els.hMeta.hidden = true;
+      els.hSub.hidden = false;
+      els.footer.hidden = true;
+      els.fab.hidden = false;
+      els.viewHome.hidden = false;
+      els.viewDetail.hidden = true;
+      renderHome();
+    }
+  }
+
+  els.backBtn.addEventListener('click', function(){ editingItemId = null; go(null); });
+
+  els.editTitleBtn.addEventListener('click', function(){ editingTitle = true; render(); });
+  function saveTitleEdit(){
+    var proj = getById(currentId);
+    if (!proj) { editingTitle = false; return; }
+    var val = els.hTitleInput.value.trim();
+    if (val) proj.title = val;
+    editingTitle = false;
+    saveProjects();
+    render();
+  }
+  els.hTitleInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); saveTitleEdit(); }
+    if (e.key === 'Escape'){ editingTitle = false; render(); }
+  });
+  els.hTitleInput.addEventListener('blur', saveTitleEdit);
+
+  function renderHome(){
+    els.projectsList.innerHTML = '';
+    var list = sortedProjects();
+    els.homeHint.hidden = list.length !== 0;
+    list.forEach(function(p){
+      var li = document.createElement('li');
+      li.className = 'proj-card' + (p.done ? ' done' : '');
+
+      if (confirmingDeleteId === p.id){
+        var cr = document.createElement('div'); cr.className = 'confirm-row';
+        var span = document.createElement('span'); span.textContent = '¿Eliminar "' + p.title + '"?';
+        var yes = document.createElement('button'); yes.className='yes'; yes.textContent='Sí';
+        yes.addEventListener('click', function(e){ e.stopPropagation(); deleteProject(p.id); });
+        var no = document.createElement('button'); no.className='no'; no.textContent='No';
+        no.addEventListener('click', function(e){ e.stopPropagation(); confirmingDeleteId=null; renderHome(); });
+        cr.appendChild(span); cr.appendChild(yes); cr.appendChild(no);
+        li.appendChild(cr);
+        els.projectsList.appendChild(li);
+        return;
+      }
+
+      var chk = document.createElement('input'); chk.type='checkbox'; chk.className='chk';
+      chk.checked = !!p.done; chk.setAttribute('aria-label','proyecto listo');
+
+      var info = document.createElement('div'); info.className='info';
+      var t = document.createElement('div'); t.className='t'; t.textContent = p.title;
+      var done = p.items.filter(function(it){return it.checked;}).length;
+      var total = p.items.length;
+      var d = document.createElement('div'); d.className='d';
+      var dtext = document.createElement('span'); dtext.className='mono'; dtext.textContent = fmtDate(p.createdAt) + ' · ' + done + '/' + total;
+      var mbar = document.createElement('span'); mbar.className='mini-bar';
+      var mfill = document.createElement('i'); mfill.style.width = (total ? Math.round(done/total*100) : 0) + '%';
+      mbar.appendChild(mfill);
+      d.appendChild(dtext); d.appendChild(mbar);
+      info.appendChild(t); info.appendChild(d);
+
+      var del = document.createElement('button'); del.className='del-btn';
+      del.innerHTML = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1.5 1.5 0 019.5 3h1A1.5 1.5 0 0112 4.5V6m-7 0l.6 9.4A1.5 1.5 0 006.1 17h7.8a1.5 1.5 0 001.5-1.6L16 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      del.addEventListener('click', function(e){ e.stopPropagation(); confirmingDeleteId = p.id; renderHome(); });
+
+      chk.addEventListener('click', function(e){ e.stopPropagation(); p.done = chk.checked; saveProjects(); renderHome(); });
+      li.addEventListener('click', function(){ go(p.id); });
+
+      li.appendChild(chk); li.appendChild(info); li.appendChild(del);
+      els.projectsList.appendChild(li);
+    });
+  }
+
+  function renderDetail(proj){
+    var total = proj.items.length;
+    var done = proj.items.filter(function(it){return it.checked;}).length;
+    els.hCount.textContent = done + '/' + total;
+    els.barFill.style.width = (total ? Math.round(done/total*100) : 0) + '%';
+    els.hMeta.textContent = fmtDate(proj.createdAt);
+
+    els.items.innerHTML = '';
+    proj.items.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(it){
+      var li = document.createElement('li');
+      li.className = 'item' + (it.checked ? ' checked' : '');
+      li.dataset.type = it.type;
+
+      var lineVar = it.type === 'dialogo' ? ('var(--' + it.color + ')') : 'var(--border)';
+      var txtVar = it.type === 'dialogo' ? ('var(--' + it.color + ')') : '';
+
+      var idx = document.createElement('span'); idx.className='idx mono'; idx.textContent = String(it.order).padStart(2,'0');
+
+      var content = document.createElement('div'); content.className='content';
+      content.style.setProperty('--line', lineVar);
+      if (txtVar){ content.style.setProperty('--tagcolor', txtVar); content.style.setProperty('--txtcolor', txtVar); }
+
+      if (editingItemId === it.id){
+        var headEdit = document.createElement('div'); headEdit.className = 'item-head';
+        var tagEdit = document.createElement('span'); tagEdit.className='tag';
+        tagEdit.textContent = it.type === 'dialogo' ? it.speaker : 'ACCIÓN';
+        headEdit.appendChild(tagEdit);
+
+        var area = document.createElement('textarea'); area.className = 'edit-area'; area.value = it.text;
+        var actions = document.createElement('div'); actions.className = 'edit-actions';
+        var saveBtn = document.createElement('button'); saveBtn.className='save'; saveBtn.textContent='Guardar';
+        var cancelBtn = document.createElement('button'); cancelBtn.className='cancel'; cancelBtn.textContent='Cancelar';
+        actions.appendChild(saveBtn); actions.appendChild(cancelBtn);
+
+        content.appendChild(headEdit); content.appendChild(area); content.appendChild(actions);
+        li.appendChild(idx); li.appendChild(content);
+
+        saveBtn.addEventListener('click', function(e){
+          e.stopPropagation();
+          var val = area.value.trim();
+          if (val) it.text = val;
+          editingItemId = null;
+          saveProjects();
+          renderDetail(proj);
+        });
+        cancelBtn.addEventListener('click', function(e){ e.stopPropagation(); editingItemId = null; renderDetail(proj); });
+        li.addEventListener('click', function(e){ e.stopPropagation(); });
+
+        els.items.appendChild(li);
+        area.focus();
+        area.setSelectionRange(area.value.length, area.value.length);
+        return;
+      }
+
+      var chk = document.createElement('input'); chk.type='checkbox'; chk.className='chk';
+      chk.checked = !!it.checked; chk.setAttribute('aria-label','marcar tomada');
+
+      var head = document.createElement('div'); head.className = 'item-head';
+      var tag = document.createElement('span'); tag.className='tag';
+      tag.textContent = it.type === 'dialogo' ? it.speaker : 'ACCIÓN';
+      var editBtn = document.createElement('button'); editBtn.className = 'edit-btn'; editBtn.setAttribute('aria-label','editar toma');
+      editBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+      head.appendChild(tag); head.appendChild(editBtn);
+
+      var text = document.createElement('p'); text.className='text'; text.textContent = it.text;
+
+      content.appendChild(head); content.appendChild(text);
+      li.appendChild(chk); li.appendChild(idx); li.appendChild(content);
+
+      editBtn.addEventListener('click', function(e){ e.stopPropagation(); editingItemId = it.id; renderDetail(proj); });
+
+      li.addEventListener('click', function(ev){
+        if (ev.target !== chk) chk.checked = !chk.checked;
+        it.checked = chk.checked;
+        saveProjects();
+        renderDetail(proj);
+      });
+      els.items.appendChild(li);
+    });
+
+    els.legend.innerHTML = '';
+    (proj.speakers || []).forEach(function(sp){
+      var w = document.createElement('span'); w.className='who';
+      var dot = document.createElement('span'); dot.className='dot'; dot.style.background = 'var(--' + sp.color + ')';
+      w.appendChild(dot); w.appendChild(document.createTextNode(sp.name));
+      els.legend.appendChild(w);
+    });
+  }
+
+  els.legendToggle.addEventListener('click', function(){
+    els.legend.classList.toggle('open');
+    els.legendToggle.textContent = els.legend.classList.contains('open') ? 'Quién habla ▴' : 'Quién habla ▾';
+  });
+
+  function deleteProject(projectId){
+    projects = projects.filter(function(p){ return p.id !== projectId; });
+    confirmingDeleteId = null;
+    saveProjects();
+    if (currentId === projectId) go(null); else renderHome();
+  }
+
+  // ---- import ----
+  function openImport(){ els.importErr.textContent=''; els.importText.value=''; els.importOverlay.classList.add('open'); els.importText.focus(); }
+  function closeImport(){ els.importOverlay.classList.remove('open'); }
+  els.fab.addEventListener('click', openImport);
+  els.importCancel.addEventListener('click', closeImport);
+  els.importOverlay.addEventListener('click', function(e){ if (e.target===els.importOverlay) closeImport(); });
+
+  var PALETTE = ['sp-1','sp-2','sp-3','sp-4','sp-5','sp-6'];
+
+  // arma un proyecto a partir de {title, speakers:[{name}], items:[{type,speaker,text}]}
+  function buildProject(data){
+    if (!data || !Array.isArray(data.items) || !data.items.length) return null;
+
+    var speakerColor = {};
+    var speakers = [];
+    (data.speakers || []).forEach(function(s, i){
+      var color = PALETTE[i % PALETTE.length];
+      speakerColor[s.name] = color;
+      speakers.push({name: s.name, color: color});
+    });
+
+    var items = data.items.map(function(it, i){
+      var color = '';
+      if (it.type === 'dialogo'){
+        if (!speakerColor[it.speaker]){
+          speakerColor[it.speaker] = PALETTE[speakers.length % PALETTE.length];
+          speakers.push({name: it.speaker, color: speakerColor[it.speaker]});
+        }
+        color = speakerColor[it.speaker];
+      }
+      return {
+        id: 'i' + i + '_' + Math.random().toString(36).slice(2,7),
+        order: i + 1,
+        type: it.type === 'accion' ? 'accion' : 'dialogo',
+        speaker: it.speaker || '',
+        color: color,
+        text: String(it.text || ''),
+        checked: false
+      };
+    });
+
+    return {
+      id: uid(),
+      title: data.title || 'Proyecto sin título',
+      createdAt: new Date().toISOString(),
+      done: false,
+      speakers: speakers,
+      items: items
+    };
+  }
+
+  els.importOk.addEventListener('click', function(){
+    var raw = els.importText.value.trim();
+    if (!raw){ els.importErr.textContent = 'Pegá primero el bloque que te dio Claude.'; return; }
+    var data;
+    try{ data = JSON.parse(raw); }
+    catch(e){ els.importErr.textContent = 'Ese texto no es válido. Copialo completo, tal cual te lo pasé.'; return; }
+    var proj = buildProject(data);
+    if (!proj){ els.importErr.textContent = 'Falta la lista de tomas en ese bloque.'; return; }
+    projects.push(proj);
+    saveProjects();
+    closeImport();
+    go(proj.id);
+  });
+
+  // ---- importar tocando un link (sin copiar/pegar) ----
+  // formato: index.html?i=<json codificado en base64url>
+  function b64urlDecode(str){
+    str = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (str.length % 4) str += '=';
+    var bin = atob(str);
+    var bytes = new Uint8Array(bin.length);
+    for (var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function importFromUrl(){
+    var params = new URLSearchParams(location.search);
+    var raw = params.get('i');
+    if (!raw) return false;
+    var proj = null;
+    try{
+      var json = b64urlDecode(raw);
+      var data = JSON.parse(json);
+      proj = buildProject(data);
+    }catch(e){ proj = null; }
+
+    // limpia el ?i= de la url para no reimportar si se refresca o comparte
+    var clean = location.pathname + (location.hash || '');
+    history.replaceState(null, '', clean);
+
+    if (!proj) return false;
+    projects.push(proj);
+    saveProjects();
+    go(proj.id);
+    return true;
+  }
+
+  var importedFromUrl = importFromUrl();
+  if (importedFromUrl) currentId = idFromHash();
+  render();
+
+  // ---- offline / service worker ----
+  function updateOnlineState(){
+    els.offlinePill.classList.toggle('show', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnlineState);
+  window.addEventListener('offline', updateOnlineState);
+  updateOnlineState();
+
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>
