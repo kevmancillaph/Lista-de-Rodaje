@@ -158,6 +158,10 @@
   .item .who{font-size:.7rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--bar, var(--dim)); margin-bottom:3px;}
   .item .text{margin:0; font-size:var(--b-size); line-height:1.42; overflow-wrap:anywhere;}
   .item[data-type="accion"] .text{color:var(--dim);}
+  .item.tint{background:color-mix(in srgb, var(--bar) 13%, transparent);}
+  .item.tint[data-type="accion"] .text{color:var(--ink);}
+  .band{position:sticky; top:0; z-index:2; display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:8px 14px; background:var(--bg); border-bottom:2px solid var(--bar); border-left:5px solid var(--bar); color:var(--bar); font-size:.74rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;}
+  .band .c{color:var(--dim); font-weight:600; letter-spacing:.04em;}
   .item.checked{background:var(--row);}
   .item.checked .text{color:var(--dim); text-decoration:line-through; text-decoration-thickness:1.5px;}
   .item.checked .who, .item.checked .n{opacity:.6;}
@@ -588,7 +592,7 @@
       title: proj.title, type: typeOf(proj),
       speakers: (proj.speakers || []).map(function(s){ return {name:s.name}; }),
       items: proj.items.slice().sort(function(a,b){ return a.order-b.order; }).map(function(it){
-        var o = {type: it.type, text: it.text}; if (it.type === 'dialogo') o.speaker = it.speaker; return o;
+        var o = {type: it.type, text: it.text}; if (it.type === 'dialogo') o.speaker = it.speaker; if (it.section) o.section = it.section; return o;
       })
     };
     var base = location.origin + location.pathname.replace(/index\.html$/, '');
@@ -612,11 +616,23 @@
 
     var nextId = nextItemId(proj);
     els.items.innerHTML = '';
+    var lastSec = null;
     proj.items.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(it){
+      if (it.section && it.section !== lastSec){
+        var inSec = proj.items.filter(function(x){ return x.section === it.section; });
+        var band = document.createElement('li'); band.className = 'band'; band.dataset.section = it.section;
+        band.style.setProperty('--bar', 'var(--' + (it.scolor || 'sp-1') + ')');
+        var bn = document.createElement('span'); bn.textContent = it.section;
+        var bc = document.createElement('span'); bc.className = 'c mono';
+        bc.textContent = inSec.filter(function(x){ return x.checked; }).length + '/' + inSec.length;
+        band.appendChild(bn); band.appendChild(bc); els.items.appendChild(band);
+      }
+      lastSec = it.section || null;
       var li = document.createElement('li');
       li.className = 'item' + (it.checked ? ' checked' : '') + (it.id===nextId ? ' next' : '');
       li.dataset.type = it.type; li.dataset.id = it.id;
-      if (it.type === 'dialogo' && it.color) li.style.setProperty('--bar', 'var(--' + it.color + ')');
+      var barColor = (it.type === 'dialogo' && it.color) ? it.color : (it.section ? it.scolor : '');
+      if (barColor){ li.style.setProperty('--bar', 'var(--' + barColor + ')'); li.classList.add('tint'); }
 
       var n = document.createElement('span'); n.className = 'n mono'; n.textContent = String(it.order).padStart(2,'0');
       var body = document.createElement('div'); body.className = 'body';
@@ -818,8 +834,10 @@
     (data.speakers || []).forEach(function(s, i){
       var c = PALETTE[i % PALETTE.length]; speakerColor[s.name] = c; speakers.push({name:s.name, color:c});
     });
+    var secColor = {}, secCount = 0;
     var items = data.items.map(function(it, i){
-      var color = '';
+      var color = '', sec = it.section ? String(it.section).slice(0, 60) : '';
+      if (sec && !secColor[sec]) secColor[sec] = PALETTE[secCount++ % PALETTE.length];
       if (it.type === 'dialogo'){
         if (!speakerColor[it.speaker]){
           speakerColor[it.speaker] = PALETTE[speakers.length % PALETTE.length];
@@ -830,7 +848,8 @@
       return {
         id: 'i' + i + '_' + Math.random().toString(36).slice(2,7), order: i + 1,
         type: it.type === 'accion' ? 'accion' : 'dialogo',
-        speaker: it.speaker || '', color: color, text: String(it.text || ''), checked: false
+        speaker: it.speaker || '', color: color, text: String(it.text || ''), checked: false,
+        section: sec, scolor: sec ? secColor[sec] : ''
       };
     });
     return {
@@ -954,6 +973,15 @@
         try{ data = await decryptFile(enc, key); }catch(e){ bad++; continue; }
         var proj = buildProject(data, 'g_' + f.replace(/\.json$/,''));
         if (!proj) { seen[f] = 1; continue; }
+        // "replaces": el archivo nuevo actualiza un proyecto ya cargado (mantiene lo marcado)
+        var old = data.replaces ? getById('g_' + String(data.replaces).replace(/\.json$/,'')) : null;
+        if (old && old.items.length === proj.items.length && !getById(proj.id)){
+          var ord = old.items.slice().sort(function(a,b){return a.order-b.order;});
+          var nw = proj.items.slice().sort(function(a,b){return a.order-b.order;});
+          ord.forEach(function(it, k){ it.section = nw[k].section; it.scolor = nw[k].scolor; it.color = nw[k].color || it.color; });
+          if (data.type) old.type = proj.type;
+          seen[f] = 1; continue;
+        }
         if (!getById(proj.id)) { projects.push(proj); added++; }
         seen[f] = 1;
       }
