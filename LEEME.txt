@@ -61,6 +61,23 @@ Eliminar por error
 Al eliminar un proyecto aparece "Deshacer" unos segundos. Si lo
 pierdes de vista, está en Ajustes > Papelera (30 días).
 
+Tipos de proyecto
+-------------------
+Cada proyecto tiene un tipo: Bodas, Beer Station o General. Cada tipo
+tiene su color y su tipografía (las fuentes están guardadas en la app,
+funcionan sin internet). Se puede cambiar tocando la etiqueta del tipo
+debajo del título. En el inicio, los botones de arriba filtran por tipo.
+Para agregar otro tipo hay que editar la lista TYPES en index.html y los
+colores/fuentes [data-ptype="..."] en el CSS.
+
+Compartir un proyecto
+-----------------------
+Dentro de un proyecto, el botón de compartir (flecha hacia arriba)
+genera un link con SOLO ese proyecto. Quien lo abra recibe una copia
+sin marcar y no ve ningún otro proyecto tuyo. El link contiene el
+guion completo: se lo manda quien quieras, pero cualquiera que tenga
+el link puede leerlo.
+
 Otros ajustes
 ---------------
 Ajustes tiene 8 temas (Sol es para grabar a pleno día, Negro para
@@ -72,3 +89,5 @@ También sigue funcionando el método anterior: un link ?i=… o el botón
 Los datos se guardan en el navegador de ese celular (localStorage).
 Si borras los datos del navegador o desinstalas la app, se pierden
 los marcados, pero los proyectos vuelven al sincronizar.
+
+Fuentes: Lora, Playfair Display, Oswald y Barlow (licencia SIL OFL, ver fonts/LICENSE-*.txt).

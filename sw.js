@@ -1,11 +1,17 @@
-const CACHE = "rodaje-v3";
+const CACHE = "rodaje-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/icon-512-maskable.png"
+  "./icons/icon-512-maskable.png",
+  "./fonts/lora-latin-400-normal.woff2",
+  "./fonts/lora-latin-700-normal.woff2",
+  "./fonts/playfair-display-latin-700-normal.woff2",
+  "./fonts/oswald-latin-600-normal.woff2",
+  "./fonts/barlow-latin-400-normal.woff2",
+  "./fonts/barlow-latin-600-normal.woff2"
 ];
 
 self.addEventListener("install", (e) => {

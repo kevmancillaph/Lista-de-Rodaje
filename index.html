@@ -50,13 +50,40 @@
     --sp-1:#7DC4F0; --sp-2:#B5E36B; --sp-3:#F2C265; --sp-4:#C6A9F5; --sp-5:#F59AB9; --sp-6:#5FD9CF;
   }
 
+  /* ---------- fuentes (guardadas en la app, funcionan sin internet) ---------- */
+  @font-face{font-family:"Lora"; font-weight:400; font-style:normal; font-display:swap; src:url(fonts/lora-latin-400-normal.woff2) format("woff2");}
+  @font-face{font-family:"Lora"; font-weight:700; font-style:normal; font-display:swap; src:url(fonts/lora-latin-700-normal.woff2) format("woff2");}
+  @font-face{font-family:"Playfair Display"; font-weight:700; font-style:normal; font-display:swap; src:url(fonts/playfair-display-latin-700-normal.woff2) format("woff2");}
+  @font-face{font-family:"Oswald"; font-weight:600; font-style:normal; font-display:swap; src:url(fonts/oswald-latin-600-normal.woff2) format("woff2");}
+  @font-face{font-family:"Barlow"; font-weight:400; font-style:normal; font-display:swap; src:url(fonts/barlow-latin-400-normal.woff2) format("woff2");}
+  @font-face{font-family:"Barlow"; font-weight:600; font-style:normal; font-display:swap; src:url(fonts/barlow-latin-600-normal.woff2) format("woff2");}
+
+  /* ---------- tipos de proyecto: cada uno con su color y su tipografía ---------- */
+  :root{
+    --f-body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --f-head:var(--f-body);
+    --h-tt:uppercase; --h-ls:.04em; --h-fw:800; --h-size:1.3rem;
+    --t-fw:600; --t-size:1.02rem; --b-size:1.06rem;
+  }
+  [data-ptype="boda"]{
+    --f-head:"Playfair Display",Georgia,serif; --f-body:Lora,Georgia,serif;
+    --h-tt:none; --h-ls:0; --h-fw:700; --h-size:1.5rem; --t-fw:700; --t-size:1.12rem; --b-size:1.05rem;
+    --accent:#A8355E; --accent-ink:#FFFFFF;
+  }
+  :root[data-mode="dark"] [data-ptype="boda"]{ --accent:#F4A6C0; --accent-ink:#2B0E1A; }
+  [data-ptype="beerstation"]{
+    --f-head:Oswald,"Arial Narrow",sans-serif; --f-body:Barlow,system-ui,sans-serif;
+    --h-tt:uppercase; --h-ls:.05em; --h-fw:600; --h-size:1.5rem; --t-fw:600; --t-size:1.15rem; --b-size:1.12rem;
+    --accent:#9A5B00; --accent-ink:#FFFFFF;
+  }
+  :root[data-mode="dark"] [data-ptype="beerstation"]{ --accent:#FFB020; --accent-ink:#1A1000; }
+
   /* ---------- base ---------- */
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   html{font-size:100%;}
   body{
     margin:0; background:var(--bg); color:var(--ink);
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-family:var(--f-body);
     display:flex; flex-direction:column; overflow:hidden;
     padding-top:env(safe-area-inset-top,0px);
   }
@@ -72,7 +99,7 @@
   /* ---------- cabecera ---------- */
   header{flex:0 0 auto; padding:12px 14px 10px; border-bottom:2px solid var(--ink);}
   .hrow{display:flex; align-items:center; gap:6px; min-height:40px;}
-  h1{margin:0; flex:1 1 auto; min-width:0; font-size:1.3rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  h1{margin:0; flex:1 1 auto; min-width:0; font-family:var(--f-head); font-size:var(--h-size); font-weight:var(--h-fw); letter-spacing:var(--h-ls); text-transform:var(--h-tt); line-height:1.15; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere;}
   .h-input{flex:1 1 auto; min-width:0; font:inherit; font-size:1.15rem; font-weight:700; background:var(--row); border:1px solid var(--line); border-radius:4px; color:var(--ink); padding:6px 8px;}
   .ib{flex:0 0 auto; width:40px; height:40px; display:flex; align-items:center; justify-content:center; background:none; border:none; border-radius:4px; color:var(--ink); cursor:pointer;}
   .ib:active{background:var(--row);}
@@ -81,6 +108,16 @@
   .count{flex:0 0 auto; font-size:.95rem; font-weight:700; padding:0 6px;}
   .sub{margin-top:4px; font-size:.7rem; letter-spacing:.04em; color:var(--dim); text-transform:uppercase;}
   .sub.warn{color:var(--accent);}
+  .subrow{display:flex; align-items:center; gap:10px; margin-top:4px; min-height:26px;}
+  .subrow .sub{margin-top:0; min-width:0;}
+  .typebtn{flex:0 0 auto; display:flex; align-items:center; font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 8px; border:1px solid var(--ink); color:var(--ink); background:none; border-radius:3px; cursor:pointer;}
+  .typebtn::before, .chip i{content:""; display:block; width:9px; height:9px; background:var(--accent); margin-right:6px; flex:0 0 auto;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px;}
+  .chip{display:flex; align-items:center; font-size:.72rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:7px 10px; border:1px solid var(--ink); border-radius:3px; background:none; color:var(--ink); cursor:pointer;}
+  .chip i{margin-right:6px;}
+  .chip .c{margin-left:6px; opacity:.7; font-weight:600;}
+  .chip[aria-pressed="true"]{background:var(--ink); color:var(--bg);}
+  .chip[data-ptype="todos"] i{display:none;}
 
   /* barra segmentada: una marca por toma */
   .ticks{display:flex; gap:2px; height:8px; margin-top:8px;}
@@ -95,10 +132,11 @@
   ul{list-style:none; margin:0; padding:0;}
 
   /* lista de proyectos */
-  .proj{display:flex; align-items:center; gap:12px; padding:14px; border-bottom:1px solid var(--line); cursor:pointer;}
+  .proj{display:flex; align-items:center; gap:12px; padding:14px 14px 14px 12px; border-bottom:1px solid var(--line); border-left:5px solid var(--line); cursor:pointer; font-family:var(--f-body);}
+  .proj[data-ptype]{border-left-color:var(--accent);}
   .proj:active{background:var(--row);}
   .proj .info{flex:1 1 auto; min-width:0;}
-  .proj .t{font-size:1.02rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .proj .t{font-family:var(--f-head); font-size:var(--t-size); font-weight:var(--t-fw); letter-spacing:var(--h-ls); text-transform:var(--h-tt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .proj .d{font-size:.72rem; color:var(--dim); margin-top:3px; text-transform:uppercase; letter-spacing:.03em;}
   .proj .ticks{height:5px; margin-top:7px;}
   .proj.done .t{color:var(--dim); text-decoration:line-through;}
@@ -118,7 +156,7 @@
   .item .body{flex:1 1 auto; min-width:0; border-left:3px solid var(--bar, var(--dim)); padding-left:11px;}
   .item[data-type="accion"] .body{border-left-style:dashed;}
   .item .who{font-size:.7rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--bar, var(--dim)); margin-bottom:3px;}
-  .item .text{margin:0; font-size:1.06rem; line-height:1.42; overflow-wrap:anywhere;}
+  .item .text{margin:0; font-size:var(--b-size); line-height:1.42; overflow-wrap:anywhere;}
   .item[data-type="accion"] .text{color:var(--dim);}
   .item.checked{background:var(--row);}
   .item.checked .text{color:var(--dim); text-decoration:line-through; text-decoration-thickness:1.5px;}
@@ -190,6 +228,9 @@
     <button class="ib" id="editTitleBtn" hidden aria-label="Editar título">
       <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
     </button>
+    <button class="ib" id="shareBtn" hidden aria-label="Compartir este proyecto">
+      <svg width="19" height="19" viewBox="0 0 20 20" fill="none"><path d="M10 13V3m0 0L6 7m4-4l4 4M4 11v6h12v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/></svg>
+    </button>
     <span class="count mono" id="hCount" hidden></span>
     <button class="ib" id="syncBtn" aria-label="Sincronizar">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16 10a6 6 0 11-1.8-4.3M16 3v4h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"/></svg>
@@ -202,7 +243,9 @@
     </button>
   </div>
   <div class="ticks" id="hTicks" hidden></div>
-  <div class="sub mono" id="hSub"></div>
+  <div class="subrow"><button class="typebtn mono" id="typeBtn" hidden aria-label="Cambiar tipo de proyecto"></button><div class="sub mono" id="hSub"></div></div>
+  <div class="chips" id="chips" hidden></div>
+  <div class="chips" id="typeRow" hidden></div>
 </header>
 
 <main id="main">
@@ -310,7 +353,7 @@
   function saveProjects(){ writeJson(STORE_KEY, projects); }
 
   var projects = loadProjects();
-  var settings = Object.assign({theme:"auto", scale:1, wake:true}, readJson(SET_KEY, {}));
+  var settings = Object.assign({theme:"auto", scale:1, wake:true, filter:"all"}, readJson(SET_KEY, {}));
   function saveSettings(){ writeJson(SET_KEY, settings); }
 
   // la papelera se vacía sola a los 30 días
@@ -319,6 +362,27 @@
     var before = projects.length;
     projects = projects.filter(function(p){ return !p.deletedAt || new Date(p.deletedAt).getTime() > limit; });
     if (projects.length !== before) saveProjects();
+  })();
+
+  var TYPES = [
+    {id:'general',    name:'General'},
+    {id:'boda',       name:'Bodas'},
+    {id:'beerstation', name:'Beer Station'}
+  ];
+  function validType(t){ for (var i=0;i<TYPES.length;i++) if (TYPES[i].id === t) return t; return null; }
+  function typeOf(p){ return validType(p && p.type) || 'general'; }
+  function typeName(id){ for (var i=0;i<TYPES.length;i++) if (TYPES[i].id === id) return TYPES[i].name; return 'General'; }
+  function inferType(title){
+    var t = String(title || '');
+    if (/beer\s*station|beerstation/i.test(t)) return 'beerstation';
+    if (/\bboda|\bbodas|novi[oa]s?\b|casamiento|matrimonio|\bvals\b/i.test(t)) return 'boda';
+    return 'general';
+  }
+  // proyectos de versiones anteriores: se les asigna un tipo una sola vez según el título
+  (function migrateTypes(){
+    var changed = false;
+    projects.forEach(function(p){ if (p.type === undefined){ p.type = inferType(p.title); changed = true; } });
+    if (changed) saveProjects();
   })();
 
   function live(){ return projects.filter(function(p){ return !p.deletedAt; }); }
@@ -330,6 +394,7 @@
     var t = settings.theme;
     if (t === "auto") t = (mq && mq.matches) ? "noche" : "papel";
     document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.setAttribute('data-mode', (t === 'papel' || t === 'sol') ? 'light' : 'dark');
     var bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
     $('metaTheme').setAttribute('content', bg || '#F6F3EC');
   }
@@ -341,11 +406,13 @@
   var currentId = null;
   var editingItemId = null;
   var editingTitle = false;
+  var typeOpen = false;
 
   var els = {
     net:$('net'), back:$('backBtn'), title:$('hTitle'), titleInput:$('hTitleInput'), editTitle:$('editTitleBtn'),
     count:$('hCount'), sync:$('syncBtn'), settings:$('settingsBtn'), add:$('addBtn'),
     ticks:$('hTicks'), sub:$('hSub'), main:$('main'),
+    typeBtn:$('typeBtn'), chips:$('chips'), typeRow:$('typeRow'), share:$('shareBtn'),
     home:$('viewHome'), detail:$('viewDetail'), list:$('projectsList'), empty:$('homeEmpty'), items:$('items'),
     footer:$('footer'), legend:$('legend'), jump:$('jumpBtn')
   };
@@ -358,7 +425,8 @@
     }catch(e){ return ''; }
   }
   function sortedProjects(){
-    return live().sort(function(a,b){
+    var f = settings.filter || 'all';
+    return live().filter(function(p){ return f === 'all' || typeOf(p) === f; }).sort(function(a,b){
       if (!!a.done !== !!b.done) return a.done ? 1 : -1;
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
@@ -398,6 +466,10 @@
       els.back.hidden = false; els.editTitle.hidden = false; els.count.hidden = false;
       els.sync.hidden = true; els.settings.hidden = true; els.add.hidden = true;
       els.ticks.hidden = false; els.footer.hidden = false;
+      document.body.dataset.ptype = typeOf(proj);
+      els.typeBtn.hidden = false; els.typeBtn.textContent = typeName(typeOf(proj)) + ' ▾';
+      els.share.hidden = false; els.chips.hidden = true;
+      renderTypeRow(proj);
       els.home.hidden = true; els.detail.hidden = false;
       if (editingTitle){
         els.title.hidden = true; els.titleInput.hidden = false;
@@ -411,10 +483,13 @@
     } else {
       editingTitle = false;
       els.back.hidden = true; els.editTitle.hidden = true; els.count.hidden = true;
-      els.sync.hidden = false; els.settings.hidden = false; els.add.hidden = false;
+      els.sync.hidden = !getKey(); els.settings.hidden = false; els.add.hidden = false;
+      delete document.body.dataset.ptype; typeOpen = false;
+      els.typeBtn.hidden = true; els.typeRow.hidden = true; els.share.hidden = true;
       els.title.hidden = false; els.titleInput.hidden = true; els.title.textContent = 'Rodaje';
       els.ticks.hidden = true; els.footer.hidden = true;
       els.home.hidden = false; els.detail.hidden = true;
+      renderChips();
       renderHome();
       renderSyncLine();
       unwake();
@@ -432,12 +507,13 @@
 
     list.forEach(function(p){
       var li = document.createElement('li'); li.className = 'proj' + (p.done ? ' done' : '');
+      li.dataset.ptype = typeOf(p);
       var chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'chk';
       chk.checked = !!p.done; chk.setAttribute('aria-label','Proyecto terminado');
       var info = document.createElement('div'); info.className = 'info';
       var t = document.createElement('div'); t.className = 't'; t.textContent = p.title;
       var done = p.items.filter(function(i){return i.checked;}).length;
-      var d = document.createElement('div'); d.className = 'd mono'; d.textContent = fmtDate(p.createdAt) + ' · ' + done + '/' + p.items.length;
+      var d = document.createElement('div'); d.className = 'd mono'; d.textContent = (typeOf(p) === 'general' ? '' : typeName(typeOf(p)) + ' · ') + fmtDate(p.createdAt) + ' · ' + done + '/' + p.items.length;
       var tk = document.createElement('div'); tk.className = 'ticks'; fillTicks(tk, p.items);
       info.appendChild(t); info.appendChild(d); info.appendChild(tk);
 
@@ -457,6 +533,73 @@
     for (var i=0;i<sorted.length;i++) if (!sorted[i].checked) return sorted[i].id;
     return null;
   }
+
+  function renderChips(){
+    var present = {}; live().forEach(function(p){ present[typeOf(p)] = (present[typeOf(p)] || 0) + 1; });
+    var ids = TYPES.map(function(t){ return t.id; }).filter(function(id){ return present[id]; });
+    if (ids.length < 2){ els.chips.hidden = true; if (settings.filter !== 'all'){ settings.filter = 'all'; saveSettings(); } return; }
+    if (settings.filter !== 'all' && !present[settings.filter]){ settings.filter = 'all'; saveSettings(); }
+    els.chips.hidden = false; els.chips.innerHTML = '';
+    function chip(id, label, n){
+      var b = document.createElement('button'); b.className = 'chip'; b.dataset.ptype = id;
+      b.setAttribute('aria-pressed', settings.filter === id ? 'true' : 'false');
+      b.innerHTML = '<i></i><span></span><span class="c mono"></span>';
+      b.children[1].textContent = label; b.children[2].textContent = n;
+      b.addEventListener('click', function(){ settings.filter = id; saveSettings(); renderChips(); renderHome(); });
+      els.chips.appendChild(b);
+    }
+    chip('all', 'Todos', live().length);
+    els.chips.lastChild.dataset.ptype = 'todos'; els.chips.lastChild.setAttribute('aria-pressed', settings.filter === 'all' ? 'true' : 'false');
+    els.chips.lastChild.onclick = function(){ settings.filter = 'all'; saveSettings(); renderChips(); renderHome(); };
+    ids.forEach(function(id){ chip(id, typeName(id), present[id]); });
+  }
+
+  function renderTypeRow(proj){
+    els.typeRow.hidden = !typeOpen; els.typeRow.innerHTML = '';
+    if (!typeOpen) return;
+    TYPES.forEach(function(t){
+      var b = document.createElement('button'); b.className = 'chip'; b.dataset.ptype = t.id;
+      b.setAttribute('aria-pressed', typeOf(proj) === t.id ? 'true' : 'false');
+      b.innerHTML = '<i></i><span></span>'; b.children[1].textContent = t.name;
+      b.addEventListener('click', function(){ proj.type = t.id; saveProjects(); typeOpen = false; render(); });
+      els.typeRow.appendChild(b);
+    });
+  }
+  els.typeBtn.addEventListener('click', function(){ typeOpen = !typeOpen; var pr = getById(currentId); if (pr) renderTypeRow(pr); });
+
+  /* compartir: un link con SOLO este proyecto (los demás no se incluyen) */
+  function bytesToB64url(bytes){
+    var bin = ''; for (var i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  async function encodePayload(obj){
+    var raw = new TextEncoder().encode(JSON.stringify(obj));
+    if (typeof CompressionStream === 'function'){
+      try{
+        var cs = new CompressionStream('deflate-raw');
+        var buf = await new Response(new Blob([raw]).stream().pipeThrough(cs)).arrayBuffer();
+        return bytesToB64url(new Uint8Array(buf));
+      }catch(e){}
+    }
+    return bytesToB64url(raw);
+  }
+  async function shareProject(proj){
+    var data = {
+      title: proj.title, type: typeOf(proj),
+      speakers: (proj.speakers || []).map(function(s){ return {name:s.name}; }),
+      items: proj.items.slice().sort(function(a,b){ return a.order-b.order; }).map(function(it){
+        var o = {type: it.type, text: it.text}; if (it.type === 'dialogo') o.speaker = it.speaker; return o;
+      })
+    };
+    var base = location.origin + location.pathname.replace(/index\.html$/, '');
+    var link = base + '?i=' + await encodePayload(data);
+    try{
+      if (navigator.share){ await navigator.share({title: proj.title, text: 'Lista de rodaje: ' + proj.title, url: link}); return; }
+    }catch(e){ if (e && e.name === 'AbortError') return; }
+    try{ await navigator.clipboard.writeText(link); toast('Link copiado. Contiene solo este proyecto.', null, null, 4500); }
+    catch(e){ window.prompt('Copia este link:', link); }
+  }
+  els.share.addEventListener('click', function(){ var pr = getById(currentId); if (pr) shareProject(pr); });
 
   var EDIT_SVG = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 
@@ -692,6 +835,7 @@
     });
     return {
       id: forcedId || uid(),
+      type: validType(data.type) || inferType(data.title),
       title: data.title || 'Proyecto sin título',
       createdAt: data.createdAt || new Date().toISOString(),
       done: false, speakers: speakers, items: items
@@ -777,7 +921,7 @@
     if (currentId && getById(currentId)) return;
     var s = syncInfo.state, t = '', warn = false;
     if (s === 'working') t = 'Sincronizando…';
-    else if (s === 'nokey'){ t = 'Falta la clave · abre Ajustes'; warn = true; }
+    else if (s === 'nokey'){ t = ''; }
     else if (s === 'badkey'){ t = 'Clave incorrecta · revisa Ajustes'; warn = true; }
     else if (s === 'error'){ t = 'No se pudo sincronizar · datos guardados'; warn = true; }
     else if (s === 'offline') t = 'Sin conexión · datos guardados';
