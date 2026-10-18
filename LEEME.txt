@@ -91,3 +91,6 @@ Si borras los datos del navegador o desinstalas la app, se pierden
 los marcados, pero los proyectos vuelven al sincronizar.
 
 Fuentes: Lora, Playfair Display, Oswald y Barlow (licencia SIL OFL, ver fonts/LICENSE-*.txt).
+
+
+Temas: paletas basadas en Catppuccin (Latte, Mocha), Rosé Pine (Alba, Oscuro), Solarized, Gruvbox, Tokyo Night, Nord y Dracula (todas con licencia MIT). Los colores de personajes se ajustaron para cumplir contraste de lectura.
