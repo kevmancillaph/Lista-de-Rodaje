@@ -1419,12 +1419,22 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       li.appendChild(chk); li.appendChild(n); li.appendChild(body); li.appendChild(eb);
       li.addEventListener('click', function(ev){
         document.body.classList.remove('enter'); lastToggled = it.id;
-        if (ev.target === chk) ev.preventDefault();
-        var cur = getById(proj.id), cit = cur && cur.items.filter(function(x){ return x.id === it.id; })[0];
-        if (cit){ proj = cur; it = cit; }
-        it.checked = !it.checked;
-        if (navigator.vibrate) { try{ navigator.vibrate(8); }catch(e){} }
-        saveProjects(); renderDetail(proj); lastToggled = null;
+        try{
+          if (ev.target === chk) ev.preventDefault();
+          var cur = getById(proj.id), cit = null;
+          if (cur && cur !== proj){
+            var same = cur.items.filter(function(x){ return it.id && x.id === it.id; });
+            cit = same.length === 1 ? same[0] : (cur.items[proj.items.indexOf(it)] || null);
+            if (cit){ proj = cur; it = cit; }
+          }
+          it.checked = !it.checked;
+          li.classList.toggle('checked', !!it.checked);
+          setTimeout(function(){ chk.checked = !!it.checked; }, 0);
+          if (navigator.vibrate) { try{ navigator.vibrate(8); }catch(e){} }
+          saveProjects();
+        }catch(e){ toast('No se pudo marcar: ' + (e && e.message || e), null, null, 8000); lastToggled = null; return; }
+        try{ renderDetail(proj); }catch(e){ toast('Error al dibujar: ' + (e && e.message || e), null, null, 8000); }
+        lastToggled = null;
       });
       els.items.appendChild(li);
     });
