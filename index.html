@@ -1432,8 +1432,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
           setTimeout(function(){ chk.checked = !!it.checked; }, 0);
           if (navigator.vibrate) { try{ navigator.vibrate(8); }catch(e){} }
           saveProjects();
-        }catch(e){ toast('No se pudo marcar: ' + (e && e.message || e), null, null, 8000); lastToggled = null; return; }
-        try{ renderDetail(proj); }catch(e){ toast('Error al dibujar: ' + (e && e.message || e), null, null, 8000); }
+        }catch(e){ try{ console.error(e); }catch(_){} lastToggled = null; return; }
+        try{ renderDetail(proj); }catch(e){ try{ console.error(e); }catch(_){} }
         lastToggled = null;
       });
       els.items.appendChild(li);
