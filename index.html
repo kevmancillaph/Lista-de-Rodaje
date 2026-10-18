@@ -472,13 +472,23 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="guion"] .jump, :root[data-estilo="guion"] .btn, :root[data-estilo="guion"] .seg{border-radius:0;}
   :root[data-estilo="guion"] .item[data-type="accion"] .who.time{display:block; text-align:left; color:var(--ink); font-size:.86rem; letter-spacing:.04em;}
   :root[data-estilo="guion"] .item .who.none{display:none;}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes gIn{from{opacity:0; transform:translateY(5px);}}
+    @keyframes gStamp{0%{transform:scale(1.7) rotate(-10deg); opacity:.2;} 100%{transform:none;}}
+    :root[data-estilo="guion"] body.enter #items > *, :root[data-estilo="guion"] body.enter #projectsList > *{animation:gIn .45s ease-out both; animation-delay:calc(var(--i,12) * 60ms);}
+    :root[data-estilo="guion"] .item.pop .chk{animation:gStamp .24s cubic-bezier(.3,1.5,.5,1);}
+    :root[data-estilo="guion"] .item.next .text{animation:gCue 2.4s ease-in-out infinite;}
+    @keyframes gCue{50%{opacity:.82;}}
+  }
   /* ---------- Brutalista ---------- */
   :root[data-estilo="brutal"]{--sf:"Space Grotesk",system-ui,sans-serif;}
   :root[data-estilo="brutal"] body, :root[data-estilo="brutal"] button, :root[data-estilo="brutal"] .h-input, :root[data-estilo="brutal"] textarea, :root[data-estilo="brutal"] input{font-family:var(--sf);}
   :root[data-estilo="brutal"] .mono{font-family:"Space Mono",ui-monospace,monospace;}
   :root[data-estilo="brutal"] [data-ptype]{--accent:var(--p-accent); --accent-ink:var(--p-ai);}
   :root[data-estilo="brutal"] header{background:var(--accent); border-bottom:4px solid var(--hard); color:var(--accent-ink);}
-  :root[data-estilo="brutal"] header .ib, :root[data-estilo="brutal"] header .count, :root[data-estilo="brutal"] header .sub, :root[data-estilo="brutal"] header h1{color:var(--accent-ink);}
+  :root[data-estilo="brutal"] header .count, :root[data-estilo="brutal"] header .sub, :root[data-estilo="brutal"] header h1{color:var(--accent-ink);}
+  :root[data-estilo="brutal"] header .ib{color:var(--ink);}
   :root[data-estilo="brutal"] h1{--h-size:1.5rem; font-family:var(--sf); font-weight:700; letter-spacing:.01em; text-transform:uppercase;}
   :root[data-estilo="brutal"] .ib{border:3px solid var(--hard); background:var(--card); color:var(--ink); border-radius:0; box-shadow:3px 3px 0 var(--hard); width:42px; height:42px;}
   :root[data-estilo="brutal"] .ib:active{transform:translate(3px,3px); box-shadow:none; background:var(--card);}
@@ -521,6 +531,14 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="brutal"] .sheet{border-top:4px solid var(--hard);}
   :root[data-estilo="brutal"] .toast{border:3px solid var(--hard); border-radius:0; box-shadow:4px 4px 0 var(--accent);}
   :root[data-estilo="brutal"] .item .who.time{font-family:"Space Mono",ui-monospace,monospace;}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes bIn{from{opacity:0; transform:translateX(-28px) rotate(-1.2deg);}}
+    @keyframes bSlam{0%{transform:scale(1.06) rotate(-.8deg);} 55%{transform:scale(.97);}}
+    :root[data-estilo="brutal"] body.enter #items > *, :root[data-estilo="brutal"] body.enter #projectsList > *{animation:bIn .34s steps(5,end) both; animation-delay:calc(var(--i,12) * 50ms);}
+    :root[data-estilo="brutal"] .item.pop{animation:bSlam .26s steps(4,end);}
+    :root[data-estilo="brutal"] .item:active, :root[data-estilo="brutal"] .proj:active{transform:translate(3px,3px); box-shadow:2px 2px 0 var(--hard);}
+  }
   /* ---------- Vidrio ---------- */
   :root[data-estilo="vidrio"]{--sf:Inter,system-ui,sans-serif;}
   :root[data-estilo="vidrio"] body, :root[data-estilo="vidrio"] button, :root[data-estilo="vidrio"] .h-input, :root[data-estilo="vidrio"] textarea, :root[data-estilo="vidrio"] input{font-family:var(--sf);}
@@ -556,6 +574,17 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="vidrio"] .seg button{border-right-color:var(--glassbr);}
   :root[data-estilo="vidrio"] .sheet{background:var(--sheetbg); -webkit-backdrop-filter:blur(26px); backdrop-filter:blur(26px); border-top:1px solid var(--glassbr); border-radius:26px 26px 0 0;}
   :root[data-estilo="vidrio"] .toast{border-radius:999px;}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes vIn{from{opacity:0; transform:translateY(16px) scale(.97);}}
+    @keyframes vGlow{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 65%, transparent);} 100%{box-shadow:0 0 0 16px transparent;}}
+    @keyframes vDrift{0%,100%{background-position:0 0, 0 0, 0 0, 0 0;} 50%{background-position:40px 30px, -35px 40px, 30px -35px, 0 0;}}
+    :root[data-estilo="vidrio"] body.enter #items > *, :root[data-estilo="vidrio"] body.enter #projectsList > *{animation:vIn .6s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i,12) * 65ms);}
+    :root[data-estilo="vidrio"] .item.pop{animation:vGlow .75s ease-out;}
+    :root[data-estilo="vidrio"] body{animation:vDrift 40s ease-in-out infinite;}
+    :root[data-estilo="vidrio"] .item, :root[data-estilo="vidrio"] .proj{transition:transform .2s ease;}
+    :root[data-estilo="vidrio"] .item:active, :root[data-estilo="vidrio"] .proj:active{transform:scale(.985);}
+  }
   /* ---------- Terminal ---------- */
   :root[data-estilo="terminal"]{--sf:"JetBrains Mono","SF Mono",ui-monospace,Menlo,monospace;}
   :root[data-estilo="terminal"] body, :root[data-estilo="terminal"] button, :root[data-estilo="terminal"] .h-input, :root[data-estilo="terminal"] .mono, :root[data-estilo="terminal"] textarea, :root[data-estilo="terminal"] input{font-family:var(--sf);}
@@ -599,6 +628,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="terminal"] .item[data-type="accion"] .who.time{display:block; color:var(--accent); letter-spacing:0;}
   :root[data-estilo="terminal"] .item[data-type="accion"] .who.time::before{content:"[";}
   :root[data-estilo="terminal"] .item[data-type="accion"] .who.time::after{content:"]";}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes tType{from{clip-path:inset(0 100% 0 0);}to{clip-path:inset(0 0 0 0);}}
+    @keyframes tBlink{50%{opacity:0;}}
+    @keyframes tFlick{0%,100%{opacity:1;} 46%{opacity:1;} 48%{opacity:.7;} 50%{opacity:1;} 83%{opacity:.85;} 85%{opacity:1;}}
+    :root[data-estilo="terminal"] body.enter #items > *, :root[data-estilo="terminal"] body.enter #projectsList > *{animation:tType .5s steps(16,end) both; animation-delay:calc(var(--i,12) * 70ms);}
+    :root[data-estilo="terminal"] .item.pop .chk{animation:tBlink .24s steps(1) 3;}
+    :root[data-estilo="terminal"] body::after{animation:tFlick 9s linear infinite;}
+    :root[data-estilo="terminal"] .item.next .n{animation:tBlink 1.1s steps(1) infinite;}
+  }
   /* ---------- Cuaderno ---------- */
   :root[data-estilo="cuaderno"]{--sf:"Patrick Hand","Segoe Print","Comic Sans MS",cursive; --sfh:"Caveat","Patrick Hand",cursive;}
   :root[data-estilo="cuaderno"] body, :root[data-estilo="cuaderno"] button, :root[data-estilo="cuaderno"] .h-input, :root[data-estilo="cuaderno"] textarea, :root[data-estilo="cuaderno"] input{font-family:var(--sf);}
@@ -642,6 +681,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="cuaderno"] .toast{border-radius:14px 18px 15px 20px / 18px 14px 20px 15px;}
   :root[data-estilo="cuaderno"] .sheet h2, :root[data-estilo="cuaderno"] .sheet h3{font-family:var(--sfh); text-transform:none; letter-spacing:0; font-size:1.5rem;}
   :root[data-estilo="cuaderno"] .sheet h3{font-size:1.2rem;}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes nIn{from{opacity:0; transform:translateY(-12px) rotate(-1.6deg);}}
+    @keyframes nDraw{from{clip-path:inset(100% 0 0 0);} to{clip-path:inset(0 0 0 0);}}
+    @keyframes nTape{from{transform:rotate(-5deg) scale(.9); opacity:0;}}
+    :root[data-estilo="cuaderno"] body.enter #items > *, :root[data-estilo="cuaderno"] body.enter #projectsList > *{animation:nIn .5s cubic-bezier(.3,1.4,.5,1) both; animation-delay:calc(var(--i,12) * 55ms);}
+    :root[data-estilo="cuaderno"] body.enter .band span:first-child{animation:nTape .5s cubic-bezier(.3,1.4,.5,1) both;}
+    :root[data-estilo="cuaderno"] .item.pop .chk:checked::after{animation:nDraw .38s ease-out;}
+    :root[data-estilo="cuaderno"] .item.pop .text{animation:nIn .4s ease-out;}
+  }
   /* ---------- Editorial ---------- */
   :root[data-estilo="editorial"]{--sf:Lora,Georgia,serif; --sfh:"Playfair Display",Georgia,serif;}
   :root[data-estilo="editorial"] body, :root[data-estilo="editorial"] button, :root[data-estilo="editorial"] .h-input, :root[data-estilo="editorial"] textarea, :root[data-estilo="editorial"] input{font-family:var(--sf);}
@@ -684,6 +733,15 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="editorial"] .legend{letter-spacing:.14em; font-size:.66rem;}
   :root[data-estilo="editorial"] .jump, :root[data-estilo="editorial"] .btn, :root[data-estilo="editorial"] .seg, :root[data-estilo="editorial"] .toast{border-radius:0;}
   :root[data-estilo="editorial"] .sheet h2{font-family:var(--sfh); text-transform:none; letter-spacing:0; font-size:1.4rem;}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes eIn{from{opacity:0; transform:translateY(12px);}}
+    @keyframes ePop{0%{transform:scale(.55);} 60%{transform:scale(1.14);}}
+    @keyframes eRule{from{border-top-color:transparent;}}
+    :root[data-estilo="editorial"] body.enter #items > *, :root[data-estilo="editorial"] body.enter #projectsList > *{animation:eIn .8s cubic-bezier(.2,.7,.2,1) both; animation-delay:calc(var(--i,12) * 90ms);}
+    :root[data-estilo="editorial"] .item.pop .chk{animation:ePop .42s ease-out;}
+    :root[data-estilo="editorial"] .item.pop .text{animation:eIn .5s ease-out;}
+  }
   /* ---------- Plano ---------- */
   :root[data-estilo="plano"]{--sf:Barlow,system-ui,sans-serif; --sm:"JetBrains Mono",ui-monospace,monospace;}
   :root[data-estilo="plano"] body, :root[data-estilo="plano"] button, :root[data-estilo="plano"] .h-input, :root[data-estilo="plano"] textarea, :root[data-estilo="plano"] input{font-family:var(--sf);}
@@ -725,6 +783,15 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="plano"] .jump, :root[data-estilo="plano"] .btn, :root[data-estilo="plano"] .seg, :root[data-estilo="plano"] .toast{border-radius:0; border-width:1.5px;}
   :root[data-estilo="plano"] .jump{font-family:var(--sm);}
   :root[data-estilo="plano"] .sheet{border-top:2px solid var(--ink);}
+
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes pIn{from{clip-path:inset(0 100% 0 0); opacity:.2;} to{clip-path:inset(0 0 0 0); opacity:1;}}
+    @keyframes pDraw{from{clip-path:inset(0 100% 0 0);} to{clip-path:inset(0 0 0 0);}}
+    @keyframes pGrid{to{background-position:23px 23px;}}
+    :root[data-estilo="plano"] body.enter #items > *, :root[data-estilo="plano"] body.enter #projectsList > *{animation:pIn .5s cubic-bezier(.6,0,.2,1) both; animation-delay:calc(var(--i,12) * 60ms);}
+    :root[data-estilo="plano"] .item.pop .chk:checked::after{animation:pDraw .32s steps(6,end);}
+    :root[data-estilo="plano"] body{animation:pGrid 12s linear infinite;}
+  }
   /* ---------- Hoja de llamado ---------- */
   :root[data-estilo="llamado"]{--sf:Barlow,system-ui,sans-serif; --sfh:Oswald,"Arial Narrow",sans-serif; --sm:"JetBrains Mono",ui-monospace,monospace;}
   :root[data-estilo="llamado"] body, :root[data-estilo="llamado"] button, :root[data-estilo="llamado"] .h-input, :root[data-estilo="llamado"] textarea, :root[data-estilo="llamado"] input{font-family:var(--sf);}
@@ -769,10 +836,38 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="llamado"] .sheet{border-top:3px solid var(--hard);}
   :root[data-estilo="llamado"] .sheet h2{font-family:var(--sfh); letter-spacing:.1em;}
 
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes lIn{from{opacity:0; transform:translateY(-10px); clip-path:inset(0 0 100% 0);}}
+    @keyframes lFlash{0%{background-color:var(--hl);} 100%{background-color:transparent;}}
+    :root[data-estilo="llamado"] body.enter #items > *, :root[data-estilo="llamado"] body.enter #projectsList > *{animation:lIn .3s steps(5,end) both; animation-delay:calc(var(--i,12) * 45ms);}
+    :root[data-estilo="llamado"] .item.pop{animation:lFlash .7s ease-out;}
+    :root[data-estilo="llamado"] .jump{transition:transform .12s steps(2);}
+    :root[data-estilo="llamado"] .jump:active{transform:translate(2px,2px);}
+  }
+
   :root[data-estilo] .item .who.none{display:none!important;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
   :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
+:root[data-estilo] #items > *, :root[data-estilo] #projectsList > *{--i:12;}
+  :root[data-estilo] #items > :nth-child(1), :root[data-estilo] #projectsList > :nth-child(1){--i:1;}
+  :root[data-estilo] #items > :nth-child(2), :root[data-estilo] #projectsList > :nth-child(2){--i:2;}
+  :root[data-estilo] #items > :nth-child(3), :root[data-estilo] #projectsList > :nth-child(3){--i:3;}
+  :root[data-estilo] #items > :nth-child(4), :root[data-estilo] #projectsList > :nth-child(4){--i:4;}
+  :root[data-estilo] #items > :nth-child(5), :root[data-estilo] #projectsList > :nth-child(5){--i:5;}
+  :root[data-estilo] #items > :nth-child(6), :root[data-estilo] #projectsList > :nth-child(6){--i:6;}
+  :root[data-estilo] #items > :nth-child(7), :root[data-estilo] #projectsList > :nth-child(7){--i:7;}
+  :root[data-estilo] #items > :nth-child(8), :root[data-estilo] #projectsList > :nth-child(8){--i:8;}
+  :root[data-estilo] #items > :nth-child(9), :root[data-estilo] #projectsList > :nth-child(9){--i:9;}
+  :root[data-estilo] #items > :nth-child(10), :root[data-estilo] #projectsList > :nth-child(10){--i:10;}
+  :root[data-estilo] #items > :nth-child(11), :root[data-estilo] #projectsList > :nth-child(11){--i:11;}
+  :root[data-estilo] #items > :nth-child(12), :root[data-estilo] #projectsList > :nth-child(12){--i:12;}
+  @media (prefers-reduced-motion:no-preference){
+    @keyframes cIn{from{opacity:0; transform:translateY(8px);}}
+    @keyframes cPop{0%{transform:scale(.6);} 60%{transform:scale(1.15);}}
+    :root[data-estilo="clasico"] body.enter #items > *, :root[data-estilo="clasico"] body.enter #projectsList > *{animation:cIn .32s ease-out both; animation-delay:calc(var(--i,12) * 35ms);}
+    :root[data-estilo="clasico"] .item.pop .chk{animation:cPop .28s cubic-bezier(.3,1.6,.5,1);}
+  }
 </style>
 </head>
 <body>
@@ -1091,7 +1186,9 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
 
   /* ---------- render ---------- */
+  var lastToggled = null, enterTimer = null;
   function render(entering){
+    if (entering){ document.body.classList.add('enter'); clearTimeout(enterTimer); enterTimer = setTimeout(function(){ document.body.classList.remove('enter'); }, 2600); }
     var proj = currentId ? getById(currentId) : null;
     if (proj && proj.deletedAt) proj = null;
 
@@ -1272,7 +1369,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       lastSec = it.section || null;
       var li = document.createElement('li');
       li.className = 'item' + (it.checked ? ' checked' : '') + (it.id===nextId ? ' next' : '');
-      li.dataset.type = it.type; li.dataset.id = it.id;
+      li.dataset.type = it.type; li.dataset.id = it.id; if (it.id === lastToggled) li.classList.add('pop');
       var barColor = (it.type === 'dialogo' && it.color) ? it.color : (it.section ? it.scolor : '');
       if (barColor){ li.style.setProperty('--bar', 'var(--' + barColor + ')'); li.classList.add('tint'); }
 
@@ -1313,9 +1410,10 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
       li.appendChild(chk); li.appendChild(n); li.appendChild(body); li.appendChild(eb);
       li.addEventListener('click', function(ev){
+        document.body.classList.remove('enter'); lastToggled = it.id;
         it.checked = (ev.target === chk) ? chk.checked : !it.checked;
         if (navigator.vibrate) { try{ navigator.vibrate(8); }catch(e){} }
-        saveProjects(); renderDetail(proj);
+        saveProjects(); renderDetail(proj); lastToggled = null;
       });
       els.items.appendChild(li);
     });
