@@ -2174,7 +2174,17 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     if (close){
       s.style.transform = 'translateY(100%)'; o.style.opacity = '0';
       o.dispatchEvent(new MouseEvent('click', {bubbles:true}));
-      setTimeout(function(){ s.style.transform = ''; o.style.opacity = ''; }, 420);
+      // la hoja se queda abajo hasta que la app confirme que cerró; si tarda, se fuerza el cierre
+      var tries = 0;
+      (function wait(){
+        tries++;
+        if (!o.classList.contains('open')){ s.style.transform = ''; o.style.opacity = ''; return; }
+        if (tries === 8){
+          o.classList.remove('open');
+          try{ if (/^#\/(ajustes|nuevo)$/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search + '#/'); }catch(e){ try{ location.hash = '#/'; }catch(_){} }
+        }
+        if (tries < 40) setTimeout(wait, 100); else { s.style.transform = ''; o.style.opacity = ''; }
+      })();
     } else { s.style.transform = ''; o.style.opacity = ''; }
     sheet = null; ov = null; mode = 0;
   }
