@@ -80,8 +80,14 @@ el link puede leerlo.
 
 Otros ajustes
 ---------------
-Ajustes tiene 8 temas (Sol es para grabar a pleno día, Negro para
-OLED), tamaño de texto y mantener la pantalla encendida.
+Ajustes tiene tres controles de apariencia que funcionan juntos:
+Modo (Auto, Día, Noche), Estilo (9) y, solo en el estilo Clásico,
+Paleta de colores (9). Todos los estilos tienen versión de día y de
+noche. Alto contraste sirve para grabar a pleno día. Además: tamaño de
+texto y mantener la pantalla encendida.
+
+Los títulos se achican solos para caber completos en el ancho de la
+pantalla (si son muy largos pasan a una fila propia).
 
 También sigue funcionando el método anterior: un link ?i=… o el botón
 + para pegar un bloque de datos.
@@ -93,6 +99,6 @@ los marcados, pero los proyectos vuelven al sincronizar.
 Fuentes: Lora, Playfair Display, Oswald y Barlow (licencia SIL OFL, ver fonts/LICENSE-*.txt).
 
 
-Temas: paletas basadas en Catppuccin (Latte, Mocha), Rosé Pine (Alba, Oscuro), Solarized, Gruvbox, Tokyo Night, Nord y Dracula (todas con licencia MIT). Los colores de personajes se ajustaron para cumplir contraste de lectura.
+Paletas del estilo Clásico (claro y oscuro): Catppuccin, Rosé Pine, Solarized, Gruvbox, Tokyo Night, Nord, Dracula (todas con licencia MIT), Papel y Alto contraste. Los colores de personajes se ajustaron para cumplir contraste de lectura.
 
-Estilos (Guion de cine, Brutalista, Vidrio, Terminal): cambian tipografia, forma y textura. Fuentes incluidas offline: Courier Prime, Space Grotesk, Inter y JetBrains Mono (licencia OFL, ver fonts/LICENSE-*.txt).
+Estilos: Clásico, Guion de cine, Brutalista, Vidrio, Terminal, Cuaderno, Editorial, Plano y Hoja de llamado. Cambian tipografía, forma y textura, no solo colores. Fuentes incluidas offline: Courier Prime, Space Grotesk, Inter, JetBrains Mono, Patrick Hand, Caveat y Playfair Display cursiva (licencia OFL, ver fonts/LICENSE-*.txt).
