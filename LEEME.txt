@@ -94,3 +94,5 @@ Fuentes: Lora, Playfair Display, Oswald y Barlow (licencia SIL OFL, ver fonts/LI
 
 
 Temas: paletas basadas en Catppuccin (Latte, Mocha), Rosé Pine (Alba, Oscuro), Solarized, Gruvbox, Tokyo Night, Nord y Dracula (todas con licencia MIT). Los colores de personajes se ajustaron para cumplir contraste de lectura.
+
+Estilos (Guion de cine, Brutalista, Vidrio, Terminal): cambian tipografia, forma y textura. Fuentes incluidas offline: Courier Prime, Space Grotesk, Inter y JetBrains Mono (licencia OFL, ver fonts/LICENSE-*.txt).

@@ -1,4 +1,4 @@
-const CACHE = "rodaje-v7";
+const CACHE = "rodaje-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,7 +11,15 @@ const ASSETS = [
   "./fonts/playfair-display-latin-700-normal.woff2",
   "./fonts/oswald-latin-600-normal.woff2",
   "./fonts/barlow-latin-400-normal.woff2",
-  "./fonts/barlow-latin-600-normal.woff2"
+  "./fonts/barlow-latin-600-normal.woff2",
+  "./fonts/courier-prime-latin-400-normal.woff2",
+  "./fonts/courier-prime-latin-700-normal.woff2",
+  "./fonts/space-grotesk-latin-500-normal.woff2",
+  "./fonts/space-grotesk-latin-700-normal.woff2",
+  "./fonts/inter-latin-400-normal.woff2",
+  "./fonts/inter-latin-600-normal.woff2",
+  "./fonts/jetbrains-mono-latin-400-normal.woff2",
+  "./fonts/jetbrains-mono-latin-700-normal.woff2"
 ];
 
 self.addEventListener("install", (e) => {
