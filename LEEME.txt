@@ -102,3 +102,5 @@ Fuentes: Lora, Playfair Display, Oswald y Barlow (licencia SIL OFL, ver fonts/LI
 Paletas del estilo Clásico (claro y oscuro): Catppuccin, Rosé Pine, Solarized, Gruvbox, Tokyo Night, Nord, Dracula (todas con licencia MIT), Papel y Alto contraste. Los colores de personajes se ajustaron para cumplir contraste de lectura.
 
 Estilos: Clásico, Guion de cine, Brutalista, Vidrio, Terminal, Cuaderno, Editorial, Plano, Hoja de llamado, Neón retro, Suave, Recibo y Cómic. Cambian tipografía, forma y textura, no solo colores. Fuentes incluidas offline: Courier Prime, Space Grotesk, Inter, JetBrains Mono, Patrick Hand, Caveat y Playfair Display cursiva (licencia OFL, ver fonts/LICENSE-*.txt).
+
+Sonidos: cada estilo tiene los suyos (marcar, desmarcar, abrir/cerrar ajustes, botones, proyecto terminado). Se generan en el aparato, sin archivos. Se apagan en Ajustes > "Sonidos según el estilo".

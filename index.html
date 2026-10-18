@@ -1213,6 +1213,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
     <h3>Pantalla</h3>
     <div class="line"><span>Mantener encendida al marcar tomas</span><input type="checkbox" class="switch" id="wakeSwitch" aria-label="Mantener pantalla encendida"></div>
+    <div class="line"><label for="sndSwitch">Sonidos según el estilo</label><input type="checkbox" class="switch" id="sndSwitch" aria-label="Sonidos"></div>
 
     <h3>Sincronización</h3>
     <div class="line"><span>Estado</span><span class="k mono" id="syncState">—</span></div>
@@ -2200,6 +2201,138 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
   document.addEventListener('touchend', end, {passive:true});
   document.addEventListener('touchcancel', end, {passive:true});
+})();
+</script>
+
+<script>
+/* sonidos por estilo: sintetizados con Web Audio (sin archivos). Se activan en Ajustes. */
+(function(){
+  var KEY = 'rodaje.sonido', ctx = null, master = null, nbuf = null, on = true;
+  try { on = localStorage.getItem(KEY) !== '0'; } catch(e){}
+  function ac(){
+    if (ctx) return ctx;
+    try {
+      var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+      ctx = new C(); master = ctx.createGain(); master.gain.value = .55; master.connect(ctx.destination);
+      var n = ctx.sampleRate * .5, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      nbuf = b;
+    } catch(e){ ctx = null; }
+    return ctx;
+  }
+  function T(f, f2, dur, type, g, at, att){      // tono con barrido
+    var t = ctx.currentTime + (at || 0), o = ctx.createOscillator(), v = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (f2 && f2 !== f) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    v.gain.setValueAtTime(.0001, t); v.gain.exponentialRampToValueAtTime(g, t + (att || .004));
+    v.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(v); v.connect(master); o.start(t); o.stop(t + dur + .03);
+  }
+  function N(dur, ft, f, f2, g, at){              // ruido filtrado
+    var t = ctx.currentTime + (at || 0), s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), v = ctx.createGain();
+    s.buffer = nbuf; fl.type = ft; fl.frequency.setValueAtTime(f, t);
+    if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    fl.Q.value = 1.2; v.gain.setValueAtTime(g, t); v.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(fl); fl.connect(v); v.connect(master); s.start(t, Math.random() * .3); s.stop(t + dur + .03);
+  }
+  var NOTES = [1, 1.25, 1.5, 2];                  // arpegio de "terminado"
+  function arp(base, type, g, step, tail){
+    for (var i = 0; i < NOTES.length; i++) T(base * NOTES[i], 0, tail || .22, type, g, i * (step || .07));
+  }
+  /* cada estilo: on (marcar), off (desmarcar), tap, open, close, done */
+  var S = {
+    clasico: { on:function(){ T(660,990,.12,'sine',.22); T(1320,0,.1,'sine',.08,.03); }, off:function(){ T(520,380,.1,'sine',.16); },
+      tap:function(){ T(900,0,.05,'sine',.1); }, open:function(){ T(400,700,.14,'sine',.14); }, close:function(){ T(700,380,.14,'sine',.12); }, done:function(){ arp(523,'sine',.16,.08,.3); } },
+    guion: { on:function(){ N(.05,'bandpass',2600,1800,.5); T(180,120,.07,'triangle',.18); }, off:function(){ N(.07,'bandpass',1400,700,.35); },
+      tap:function(){ N(.03,'bandpass',3000,0,.3); }, open:function(){ N(.12,'bandpass',900,2200,.28); }, close:function(){ N(.12,'bandpass',2200,800,.25); },
+      done:function(){ N(.04,'bandpass',2800,0,.5); N(.04,'bandpass',2800,0,.5,.1); N(.04,'bandpass',2800,0,.5,.2); T(990,0,.4,'sine',.14,.3); } },
+    brutal: { on:function(){ T(130,55,.14,'square',.3); N(.06,'lowpass',900,200,.6); }, off:function(){ T(90,50,.12,'square',.22); },
+      tap:function(){ T(160,90,.07,'square',.2); }, open:function(){ T(80,160,.14,'square',.22); N(.08,'lowpass',600,1400,.4); }, close:function(){ T(160,60,.14,'square',.22); },
+      done:function(){ T(110,55,.18,'square',.3); T(165,82,.18,'square',.3,.12); T(220,110,.3,'square',.32,.24); N(.12,'lowpass',1200,200,.6,.24); } },
+    vidrio: { on:function(){ T(1568,0,.7,'sine',.16,0,.002); T(2349,0,.5,'sine',.07,.01,.002); T(3136,0,.3,'sine',.04,.02,.002); },
+      off:function(){ T(1175,0,.5,'sine',.12,0,.002); T(1760,0,.3,'sine',.05,.01,.002); }, tap:function(){ T(2093,0,.18,'sine',.1,0,.002); },
+      open:function(){ T(1047,1568,.35,'sine',.1); T(2093,0,.5,'sine',.06,.1,.002); }, close:function(){ T(1568,880,.3,'sine',.09); },
+      done:function(){ [1047,1319,1568,2093,2637].forEach(function(f,i){ T(f,0,.9,'sine',.12,i*.09,.002); }); } },
+    terminal: { on:function(){ T(1400,0,.06,'square',.1); T(2100,0,.07,'square',.1,.07); }, off:function(){ T(900,0,.06,'square',.1); T(600,0,.08,'square',.1,.07); },
+      tap:function(){ T(1800,0,.03,'square',.07); }, open:function(){ T(700,0,.05,'square',.09); T(1000,0,.05,'square',.09,.06); T(1400,0,.07,'square',.09,.12); },
+      close:function(){ T(1400,0,.05,'square',.09); T(1000,0,.05,'square',.09,.06); T(700,0,.07,'square',.09,.12); },
+      done:function(){ [800,1000,1200,1600,1200,1600].forEach(function(f,i){ T(f,0,.07,'square',.09,i*.07); }); } },
+    cuaderno: { on:function(){ N(.18,'bandpass',2500,5200,.55); T(300,200,.05,'triangle',.18,.17); }, off:function(){ N(.14,'bandpass',4800,2200,.45); },
+      tap:function(){ T(260,180,.05,'triangle',.2); N(.03,'highpass',3000,0,.2); }, open:function(){ N(.22,'bandpass',1200,3000,.3); }, close:function(){ N(.2,'bandpass',3000,1000,.28); },
+      done:function(){ N(.14,'bandpass',2600,5000,.5); N(.14,'bandpass',2600,5000,.5,.16); N(.2,'bandpass',2600,5200,.5,.32); T(300,200,.06,'triangle',.2,.5); } },
+    editorial: { on:function(){ T(523,0,.5,'triangle',.16,0,.01); T(1047,0,.4,'sine',.05,0,.01); }, off:function(){ T(392,0,.35,'triangle',.12,0,.01); },
+      tap:function(){ T(784,0,.12,'triangle',.1,0,.008); }, open:function(){ T(392,523,.3,'triangle',.11,0,.03); }, close:function(){ T(523,392,.3,'triangle',.1,0,.03); },
+      done:function(){ T(523,0,.9,'triangle',.14,0,.01); T(659,0,.9,'triangle',.12,.1,.01); T(784,0,1.1,'triangle',.12,.2,.01); T(1047,0,1.3,'sine',.07,.3,.01); } },
+    plano: { on:function(){ T(760,0,.07,'sine',.2); }, off:function(){ T(520,0,.07,'sine',.15); }, tap:function(){ T(1000,0,.03,'sine',.1); },
+      open:function(){ T(600,0,.06,'sine',.12); }, close:function(){ T(450,0,.06,'sine',.1); }, done:function(){ T(660,0,.09,'sine',.15); T(880,0,.09,'sine',.15,.09); T(1320,0,.16,'sine',.15,.18); } },
+    llamado: { on:function(){ T(1000,1500,.09,'square',.12); N(.12,'bandpass',2800,0,.12,.09); }, off:function(){ T(1200,800,.09,'square',.1); N(.1,'bandpass',2400,0,.1,.09); },
+      tap:function(){ T(1500,0,.04,'square',.08); }, open:function(){ N(.06,'bandpass',2600,0,.2); T(900,1350,.1,'square',.11,.06); }, close:function(){ T(1350,900,.1,'square',.1); N(.1,'bandpass',2600,0,.18,.1); },
+      done:function(){ T(900,0,.1,'square',.11); T(1200,0,.1,'square',.11,.12); T(1800,0,.22,'square',.12,.24); N(.14,'bandpass',2600,0,.18,.46); } },
+    neon: { on:function(){ T(300,1500,.16,'sawtooth',.1); T(1500,0,.12,'sine',.1,.14); }, off:function(){ T(1200,200,.16,'sawtooth',.09); },
+      tap:function(){ T(1700,900,.05,'sawtooth',.06); }, open:function(){ T(200,1200,.24,'sawtooth',.08); }, close:function(){ T(1200,200,.22,'sawtooth',.08); },
+      done:function(){ T(200,2000,.3,'sawtooth',.09); [880,1320,1760,2640].forEach(function(f,i){ T(f,0,.3,'sine',.1,.28+i*.07); }); } },
+    suave: { on:function(){ T(380,900,.1,'sine',.24,0,.01); }, off:function(){ T(700,300,.1,'sine',.18,0,.01); }, tap:function(){ T(500,700,.06,'sine',.14,0,.008); },
+      open:function(){ T(300,600,.16,'sine',.16,0,.02); }, close:function(){ T(600,300,.16,'sine',.14,0,.02); },
+      done:function(){ [440,554,659,880].forEach(function(f,i){ T(f,f*1.5,.14,'sine',.18,i*.09,.01); }); } },
+    ticket: { on:function(){ for (var i=0;i<4;i++) N(.025,'bandpass',3500+i*300,0,.45,i*.035); T(2400,0,.05,'square',.06,.16); }, off:function(){ N(.05,'bandpass',2000,900,.4); N(.05,'bandpass',2000,900,.4,.07); },
+      tap:function(){ N(.03,'bandpass',3200,0,.35); }, open:function(){ for (var i=0;i<6;i++) N(.02,'bandpass',3000,0,.35,i*.03); }, close:function(){ for (var i=0;i<4;i++) N(.02,'bandpass',2200,0,.3,i*.03); },
+      done:function(){ for (var i=0;i<8;i++) N(.022,'bandpass',3200+(i%2)*500,0,.4,i*.035); T(2093,0,.3,'sine',.12,.3); } },
+    comic: { on:function(){ T(220,700,.07,'triangle',.28); T(700,330,.14,'triangle',.22,.07); N(.05,'highpass',2000,0,.25); }, off:function(){ T(500,180,.14,'triangle',.22); },
+      tap:function(){ T(400,600,.06,'triangle',.16); }, open:function(){ T(160,520,.12,'triangle',.22); T(520,420,.1,'triangle',.18,.12); }, close:function(){ T(520,150,.18,'triangle',.2); },
+      done:function(){ N(.18,'lowpass',2500,300,.7); T(150,60,.2,'triangle',.3); [523,659,784,1047].forEach(function(f,i){ T(f,f*1.04,.1,'triangle',.2,.2+i*.06); }); } }
+  };
+  var last = 0;
+  function play(ev){
+    if (!on) return;
+    var c = ac(); if (!c) return;
+    if (c.state === 'suspended') { try { c.resume(); } catch(e){} }
+    var now = Date.now(); if (now - last < 25 && ev === 'tap') return; last = now;
+    var st = S[document.documentElement.getAttribute('data-estilo')] || S.clasico;
+    try { (st[ev] || st.tap)(); } catch(e){}
+  }
+  window.rodajeSonido = play;
+  function unlock(){ ac(); if (ctx && ctx.state === 'suspended') { try{ ctx.resume(); }catch(e){} } }
+  document.addEventListener('touchstart', unlock, {passive:true, capture:true});
+  document.addEventListener('pointerdown', unlock, {passive:true, capture:true});
+
+  /* marcar / desmarcar: se detecta el cambio de clase en el ítem; si ya no queda ninguno sin marcar, suena "terminado" */
+  new MutationObserver(function(recs){
+    for (var i = 0; i < recs.length; i++){
+      var r = recs[i], t = r.target;
+      if (r.attributeName !== 'class' || !t.classList) continue;
+      var was = /\bchecked\b/.test(r.oldValue || ''), now = t.classList.contains('checked');
+      if (t.classList.contains('item') && was !== now){
+        if (!now) { play('off'); return; }
+        var list = t.parentNode, rest = list ? list.querySelectorAll('.item:not(.checked)').length : 1;
+        play(rest === 0 ? 'done' : 'on'); return;
+      }
+      if (t.classList.contains('overlay')){
+        var o = /\bopen\b/.test(r.oldValue || ''), n = t.classList.contains('open');
+        if (o !== n) { play(n ? 'open' : 'close'); return; }
+      }
+    }
+  }).observe(document.body, {subtree:true, attributes:true, attributeFilter:['class'], attributeOldValue:true});
+
+  /* toques en botones */
+  document.addEventListener('click', function(e){
+    var t = e.target; if (!t || !t.closest) return;
+    if (t.closest('#sndSwitch')) return;
+    if (t.closest('#themeStyles')) { setTimeout(function(){ play('on'); }, 90); return; }
+    if (t.closest('.item') && !t.closest('.ib, button')) return;
+    if (t.closest('.overlay:not(.open)')) return;
+    if (t.closest('button, .ib, .seg, .switch, .proj, .fab, summary, [role=button]')) play('tap');
+  }, true);
+
+  /* interruptor en Ajustes */
+  var sw = document.getElementById('sndSwitch');
+  if (sw){
+    sw.checked = on;
+    sw.addEventListener('change', function(){
+      on = sw.checked;
+      try { localStorage.setItem(KEY, on ? '1' : '0'); } catch(e){}
+      if (on) { unlock(); setTimeout(function(){ play('on'); }, 30); }
+    });
+  }
 })();
 </script>
 
