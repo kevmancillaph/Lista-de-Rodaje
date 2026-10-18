@@ -368,7 +368,7 @@
   function idFromHash(){ var m = /^#\/p\/(.+)$/.exec(location.hash); return m ? decodeURIComponent(m[1]) : null; }
   window.addEventListener('hashchange', function(){
     if (typeof keyFromHash === 'function' && keyFromHash()){ currentId = null; render(true); toast('Clave activada', null, null, 3500); sync(true); return; }
-    currentId = idFromHash(); editingItemId = null; render(true);
+    currentId = idFromHash(); editingItemId = null; render(true); syncSheets();
   });
   currentId = idFromHash();
 
@@ -631,15 +631,30 @@
   });
   $('wakeSwitch').addEventListener('change', function(){ settings.wake = this.checked; saveSettings(); if (settings.wake) wake(); else unwake(); });
 
-  function openSettings(){
-    renderThemes(); renderSizes(); renderTrash(); renderSyncDetail();
-    $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
-    $('settingsOverlay').classList.add('open');
+  /* Las hojas (Ajustes, Pegar proyecto) son rutas del historial (#/ajustes, #/nuevo):
+     el botón atrás del celular las cierra en vez de salir de la app. */
+  var SHEETS = {'#/ajustes':'settingsOverlay', '#/nuevo':'importOverlay'};
+  var sheetByUs = false;
+  function sheetFromHash(){ return SHEETS[location.hash] || null; }
+  function syncSheets(){
+    var s = sheetFromHash();
+    ['settingsOverlay','importOverlay'].forEach(function(id){ $(id).classList.toggle('open', id === s); });
+    if (s === 'settingsOverlay'){
+      renderThemes(); renderSizes(); renderTrash(); renderSyncDetail();
+      $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
+    } else if (s === 'importOverlay'){
+      $('importErr').textContent = ''; $('importText').value = '';
+      setTimeout(function(){ $('importText').focus(); }, 80);
+    } else sheetByUs = false;
   }
-  function closeSettings(){ $('settingsOverlay').classList.remove('open'); }
-  els.settings.addEventListener('click', openSettings);
-  $('settingsClose').addEventListener('click', closeSettings);
-  $('settingsOverlay').addEventListener('click', function(e){ if (e.target === $('settingsOverlay')) closeSettings(); });
+  function openSheet(hash){ sheetByUs = true; location.hash = hash; }
+  function closeSheet(){
+    if (!sheetFromHash()) return;
+    if (sheetByUs) history.back(); else location.replace('#/');
+  }
+  els.settings.addEventListener('click', function(){ openSheet('/ajustes'); });
+  $('settingsClose').addEventListener('click', closeSheet);
+  $('settingsOverlay').addEventListener('click', function(e){ if (e.target === $('settingsOverlay')) closeSheet(); });
 
   /* ---------- mantener pantalla encendida ---------- */
   var wl = null;
@@ -683,18 +698,17 @@
     };
   }
 
-  function openImport(){ $('importErr').textContent = ''; $('importText').value = ''; $('importOverlay').classList.add('open'); $('importText').focus(); }
-  function closeImport(){ $('importOverlay').classList.remove('open'); }
-  els.add.addEventListener('click', openImport);
-  $('importCancel').addEventListener('click', closeImport);
-  $('importOverlay').addEventListener('click', function(e){ if (e.target === $('importOverlay')) closeImport(); });
+  els.add.addEventListener('click', function(){ openSheet('/nuevo'); });
+  $('importCancel').addEventListener('click', closeSheet);
+  $('importOverlay').addEventListener('click', function(e){ if (e.target === $('importOverlay')) closeSheet(); });
   $('importOk').addEventListener('click', function(){
     var raw = $('importText').value.trim();
     if (!raw){ $('importErr').textContent = 'Pega primero el bloque.'; return; }
     var data; try{ data = JSON.parse(raw); }catch(e){ $('importErr').textContent = 'Ese texto no es válido. Cópialo completo.'; return; }
     var proj = buildProject(data);
     if (!proj){ $('importErr').textContent = 'Falta la lista de tomas en ese bloque.'; return; }
-    projects.push(proj); saveProjects(); closeImport(); go(proj.id);
+    projects.push(proj); saveProjects(); sheetByUs = false;
+    location.replace('#/p/' + encodeURIComponent(proj.id));
   });
 
   /* ---------- importar por link (?i=) ---------- */
@@ -847,6 +861,7 @@
 
   /* ---------- arranque ---------- */
   var keyJustSet = keyFromHash();
+  if (sheetFromHash()) history.replaceState(null, '', location.pathname + location.search + '#/');
   importFromUrl().then(function(imported){
     if (imported) currentId = idFromHash();
     render(true);
