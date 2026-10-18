@@ -1091,6 +1091,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     :root[data-estilo="comic"] .item.checked.pop::before{content:"¡LISTO!"; position:absolute; right:8px; top:-14px; z-index:3; background:var(--hl); color:#101010; border:3px solid var(--hard); padding:0 9px; font-family:var(--sfh); font-weight:600; letter-spacing:.08em; font-size:.9rem; transform:rotate(8deg); animation:kBang 1.2s ease-out both; pointer-events:none;}
   }
 
+  /* colores de personajes y secciones: etiquetas rellenas para que se distingan de un vistazo */
+  :root[data-modo="light"]{--onbar:#fff;} :root[data-modo="dark"]{--onbar:#0d0d0d;}
+  :root[data-estilo]:not([data-estilo="brutal"]):not([data-estilo="llamado"]):not([data-estilo="comic"]) .item .who:not(.time):not(.none){background:var(--bar,var(--dim)); color:var(--onbar); padding:2px 10px; border-radius:6px; width:fit-content; line-height:1.35;}
+  :root[data-estilo]:not([data-estilo="brutal"]):not([data-estilo="llamado"]):not([data-estilo="comic"]) .item .who.time:not(.none){background:color-mix(in srgb, var(--bar,var(--dim)) 20%, transparent); padding:1px 9px; border-radius:6px; width:fit-content;}
+  :root[data-estilo]:not([data-estilo="brutal"]):not([data-estilo="llamado"]):not([data-estilo="comic"]):not([data-estilo="cuaderno"]):not([data-estilo="vidrio"]) .band span:first-child{background:var(--bar,var(--dim)); color:var(--onbar); padding:2px 12px; border-radius:6px; text-shadow:none;}
+  :root[data-estilo="vidrio"] .band{background:color-mix(in srgb, var(--bar,var(--accent)) 30%, var(--bandbg));}
+  :root[data-estilo="clasico"] .item.tint{background:color-mix(in srgb, var(--bar) 22%, transparent);}
+  :root[data-estilo="cuaderno"] .item.tint{background:color-mix(in srgb, var(--bar) 20%, transparent);}
+  :root[data-estilo="suave"] .item.tint{background:linear-gradient(145deg, color-mix(in srgb, var(--bar) 20%, var(--bg)), var(--bg) 75%);}
+
   :root[data-estilo] .item .who.none{display:none!important;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
