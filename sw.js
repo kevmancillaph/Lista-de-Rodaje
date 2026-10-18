@@ -1,4 +1,4 @@
-const CACHE = "rodaje-v2";
+const CACHE = "rodaje-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -24,17 +24,32 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// cache-first para el shell de la app; cualquier cosa nueva del mismo origen
-// se guarda de paso para la próxima vez que no haya internet.
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  const url = new URL(e.request.url);
 
-  // toda navegación (incluida index.html?i=... de un link de import) sirve
-  // el shell cacheado: la propia página lee el ?i= de location.search,
-  // así que un link de import abre offline igual.
+  // los guiones sincronizados siempre van directo a la red (nunca desde caché):
+  // la app ya guarda su propia copia en el celular.
+  if (url.origin === self.location.origin && url.pathname.includes("/proyectos/")) return;
+
+  // la página: se abre al instante desde caché (funciona sin internet) y se
+  // actualiza en segundo plano para la próxima vez. El ?i= de un link de
+  // import lo lee la propia página, así que abre igual sin conexión.
   if (e.request.mode === "navigate") {
     e.respondWith(
-      caches.match("./index.html").then((shell) => shell || fetch(e.request))
+      caches.match("./index.html").then((shell) => {
+        const refresh = fetch("./index.html", { cache: "no-store" })
+          .then((res) => {
+            if (res && res.status === 200) {
+              const clone = res.clone();
+              caches.open(CACHE).then((c) => c.put("./index.html", clone));
+            }
+            return res;
+          })
+          .catch(() => shell);
+        if (shell) { e.waitUntil(refresh); return shell; }
+        return refresh;
+      })
     );
     return;
   }

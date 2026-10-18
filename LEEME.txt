@@ -37,32 +37,38 @@ Te queda un ícono propio en la pantalla de inicio. Al abrirlo,
 entra directo a la app, sin barra de direcciones — como cualquier
 otra app instalada.
 
-Cómo se carga un proyecto nuevo
+Cómo llegan los proyectos nuevos
 ----------------------------------
-Esta app NO se conecta sola al chat en tiempo real (es un archivo
-aparte, pensado para funcionar sin internet — por eso no puede
-depender de que Claude la esté "escuchando"). El flujo es:
+Pegas el guion o cronograma en el chat con Claude y listo. Claude lo
+cifra y lo sube a la carpeta proyectos/ de este repo. La app, cada
+vez que la abres con internet (o tocas el botón de actualizar),
+descarga los proyectos nuevos, los descifra en el celular y los guarda.
+Después los ves sin internet.
 
-1. En el chat con Claude, le pegás tu guion como siempre.
-2. Después de que le des el link de tu app instalada (una sola vez,
-   ver abajo), Claude te va a pasar un LINK en vez de un bloque para
-   copiar. Tocás ese link desde el celu donde ya instalaste la app.
-3. Se abre la app sola, con el proyecto ya cargado. Sin copiar ni
-   pegar nada.
+Los archivos de proyectos/ están cifrados (AES-GCM): aunque el repo
+sea público, en GitHub solo se ve texto ilegible. La clave vive solo
+en tu celular y en tu cuenta de Claude.
 
-La primera vez, avisale a Claude en el chat cuál quedó tu link de
-GitHub Pages (el de https://tu-usuario.github.io/lista-de-rodaje/)
-para que arme los links de import con esa dirección.
+Activar la clave (una sola vez por celular)
+---------------------------------------------
+Claude te pasa un link con la clave al final (…/Lista-de-Rodaje/#k=…).
+Tócalo desde el celular donde tienes la app. Si no abre en la app
+instalada, abre la app > menú (tres rayas) > "Guardar clave" y pega la
+clave ahí.
 
-Si el guion es muy largo el link puede quedar largo también — en
-ese caso Claude te va a avisar y te pasa el bloque de texto para
-pegar con el botón + como alternativa (mismo resultado).
+Eliminar por error
+--------------------
+Al eliminar un proyecto aparece "Deshacer" unos segundos. Si lo
+pierdes de vista, está en Ajustes > Papelera (30 días).
 
-Desde que un proyecto entra a la app, queda guardado en el celu.
-Podés marcar tomas y abrir la app las veces que quieras sin
-internet — solo hace falta conexión para tocar el link nuevo que
-te pasa Claude, y para la primera vez que instalás la app.
+Otros ajustes
+---------------
+Ajustes tiene 8 temas (Sol es para grabar a pleno día, Negro para
+OLED), tamaño de texto y mantener la pantalla encendida.
 
-Los datos se guardan localmente en el navegador de ese celu
-(localStorage). Si borrás datos del navegador o desinstalás la
-app, se pierden — no hay backup en la nube en esta versión.
+También sigue funcionando el método anterior: un link ?i=… o el botón
++ para pegar un bloque de datos.
+
+Los datos se guardan en el navegador de ese celular (localStorage).
+Si borras los datos del navegador o desinstalas la app, se pierden
+los marcados, pero los proyectos vuelven al sincronizar.
