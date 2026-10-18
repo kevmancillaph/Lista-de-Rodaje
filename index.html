@@ -2062,6 +2062,19 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     $('keyState').textContent = getKey() ? 'activada' : 'falta';
   }
 
+  // si el proyecto guardado en este aparato no trae secciones/colores, los toma del archivo del repo (mismo título y mismo número de tomas)
+  function repairFrom(proj){
+    var cand = getById(proj.id);
+    if (!cand) for (var k=0;k<projects.length;k++){ var q = projects[k]; if (!q.deletedAt && q.title === proj.title && q.items.length === proj.items.length){ cand = q; break; } }
+    if (!cand || cand.items.length !== proj.items.length) return false;
+    if (!proj.items.some(function(i){ return i.section; })) return false;
+    var ord = cand.items.slice().sort(function(a,b){return a.order-b.order;});
+    var nw = proj.items.slice().sort(function(a,b){return a.order-b.order;});
+    if (!ord.some(function(i){ return !i.section; })) return false;
+    ord.forEach(function(it, k){ it.section = nw[k].section; it.scolor = nw[k].scolor; if (it.type === 'dialogo' && !it.color) it.color = nw[k].color; });
+    return true;
+  }
+
   async function sync(manual){
     if (syncing) return;
     var key = getKey();
@@ -2071,15 +2084,17 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     try{
       var idx = await getJson('proyectos/index.json');
       var files = Array.isArray(idx.files) ? idx.files : [];
-      var seen = loadSeen(), added = 0, bad = 0;
+      var seen = loadSeen(), added = 0, bad = 0, fixed = 0, rep = readJson('rodaje.repair.v1', {});
       for (var i=0;i<files.length;i++){
         var f = files[i];
-        if (seen[f]) continue;
+        if (seen[f] && rep[f]) continue;
         var enc = await getJson('proyectos/' + f);
         var data;
-        try{ data = await decryptFile(enc, key); }catch(e){ bad++; continue; }
+        try{ data = await decryptFile(enc, key); }catch(e){ if (!seen[f]) bad++; continue; }
         var proj = buildProject(data, 'g_' + f.replace(/\.json$/,''));
-        if (!proj) { seen[f] = 1; continue; }
+        if (!proj) { seen[f] = 1; rep[f] = 1; continue; }
+        // ya visto: solo completar secciones y colores que le falten al proyecto guardado
+        if (seen[f]) { if (repairFrom(proj)) fixed++; rep[f] = 1; continue; }
         // "replaces": el archivo nuevo actualiza un proyecto ya cargado (mantiene lo marcado)
         var old = data.replaces ? getById('g_' + String(data.replaces).replace(/\.json$/,'')) : null;
         if (old && old.items.length === proj.items.length && !getById(proj.id)){
@@ -2089,10 +2104,12 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
           if (data.type) old.type = proj.type;
           seen[f] = 1; continue;
         }
+        if (!getById(proj.id) && repairFrom(proj)) { seen[f] = 1; rep[f] = 1; fixed++; continue; }
         if (!getById(proj.id)) { projects.push(proj); added++; }
-        seen[f] = 1;
+        seen[f] = 1; rep[f] = 1;
       }
-      writeJson(SEEN_KEY, seen); saveProjects();
+      writeJson(SEEN_KEY, seen); writeJson('rodaje.repair.v1', rep); saveProjects();
+      if (fixed) toast('Secciones y colores actualizados', null, null, 4000);
       if (bad && !added){ setSync('badkey'); }
       else {
         var now = Date.now(); writeJson('rodaje.lastsync.v1', now);
