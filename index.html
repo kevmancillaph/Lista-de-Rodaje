@@ -457,7 +457,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="guion"] .band span:first-child::before{content:"ESC. " counter(esc, decimal-leading-zero) " — "; font-weight:400;}
   :root[data-estilo="guion"] .band .c{font-weight:400;}
   :root[data-estilo="guion"] .item{border-bottom:none; padding-top:9px; padding-bottom:9px; align-items:baseline;}
-  :root[data-estilo="guion"] .item .n{width:3.4em; white-space:nowrap; text-align:right; padding-top:0; font-size:.72rem;}
   :root[data-estilo="guion"] .item .chk{width:20px; height:20px; border-width:1.5px; border-radius:0; align-self:center;}
   :root[data-estilo="guion"] .item .chk:checked::after{left:5px; top:0; width:5px; height:11px; border-width:0 2.5px 2.5px 0;}
   :root[data-estilo="guion"] .item .body{border-left:none; padding-left:0;}
@@ -468,8 +467,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="guion"] .item[data-type="accion"] .text{color:var(--ink); font-size:.98rem;}
   :root[data-estilo="guion"] .item.tint, :root[data-estilo="guion"] .item.checked{background:none;}
   :root[data-estilo="guion"] .item.checked .text{color:var(--dim);}
-  :root[data-estilo="guion"] .item.next{box-shadow:none; background:color-mix(in srgb, var(--accent) 9%, transparent);}
-  :root[data-estilo="guion"] .item.next .n::before{content:"▶ "; color:var(--accent);}
+  :root[data-estilo="guion"] .item.next{box-shadow:inset 3px 0 0 var(--accent); background:color-mix(in srgb, var(--accent) 9%, transparent);}
   :root[data-estilo="guion"] footer{border-top:1px solid var(--ink);}
   :root[data-estilo="guion"] .jump, :root[data-estilo="guion"] .btn, :root[data-estilo="guion"] .seg{border-radius:0;}
   :root[data-estilo="guion"] .item[data-type="accion"] .who.time{display:block; text-align:left; color:var(--ink); font-size:.86rem; letter-spacing:.04em;}
@@ -581,7 +579,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="terminal"] .band{background:var(--bg); border:none; border-bottom:1px solid var(--line); border-left:none; color:var(--bar,var(--accent)); text-transform:none; letter-spacing:0; font-size:.86rem; padding:12px 14px 4px;}
   :root[data-estilo="terminal"] .band span:first-child::before{content:"## ";}
   :root[data-estilo="terminal"] .item{border-bottom:1px dashed var(--line); padding-top:10px; padding-bottom:10px;}
-  :root[data-estilo="terminal"] .item .n{width:auto; min-width:2.6em; color:var(--dim); padding-top:3px;}
   :root[data-estilo="terminal"] .item .chk{width:auto; height:auto; min-width:3.1ch; border:none; background:none; border-radius:0; margin-top:2px; font-size:.95rem;}
   :root[data-estilo="terminal"] .item .chk::before{content:"[ ]"; color:var(--ink);}
   :root[data-estilo="terminal"] .item .chk:checked{background:none; border:none;}
@@ -596,7 +593,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="terminal"] .item[data-type="accion"] .text{color:var(--ink);}
   :root[data-estilo="terminal"] .item.tint, :root[data-estilo="terminal"] .item.checked{background:none;}
   :root[data-estilo="terminal"] .item.checked .text{color:var(--dim);}
-  :root[data-estilo="terminal"] .item.next{box-shadow:none; background:color-mix(in srgb, var(--accent) 9%, transparent);}
+  :root[data-estilo="terminal"] .item.next{box-shadow:inset 3px 0 0 var(--accent); background:color-mix(in srgb, var(--accent) 9%, transparent);}
   :root[data-estilo="terminal"] .item.next .n::before{content:"> "; color:var(--accent);}
   :root[data-estilo="terminal"] footer{border-top:1px solid var(--accent);}
   :root[data-estilo="terminal"] .item[data-type="accion"] .who.time{display:block; color:var(--accent); letter-spacing:0;}
@@ -621,12 +618,11 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="cuaderno"] .proj .t{font-family:var(--sfh); font-weight:700; text-transform:none; letter-spacing:0; --t-size:1.55rem;}
   :root[data-estilo="cuaderno"] .proj .d{font-size:.8rem; text-transform:none;}
   :root[data-estilo="cuaderno"] #items{position:relative;}
-  :root[data-estilo="cuaderno"] #items::before{content:""; position:absolute; left:88px; top:0; bottom:0; width:2px; background:var(--margin); z-index:-1;}
+  :root[data-estilo="cuaderno"] #items::before{content:""; position:absolute; left:46px; top:0; bottom:0; width:2px; background:var(--margin); z-index:-1;}
   :root[data-estilo="cuaderno"] .band{background:var(--bg); border:none; margin:10px 0 0; padding:8px 14px 4px; color:var(--ink); font-family:var(--sfh); font-size:1.35rem; font-weight:700; letter-spacing:0; text-transform:none; align-items:center;}
   :root[data-estilo="cuaderno"] .band span:first-child{background:color-mix(in srgb, var(--bar) 34%, var(--bg)); transform:rotate(-1.2deg); padding:1px 16px 3px; border-radius:2px; box-shadow:0 1px 2px color-mix(in srgb, var(--ink) 18%, transparent);}
   :root[data-estilo="cuaderno"] .band .c{font-family:var(--sf); font-weight:400; font-size:.9rem; color:var(--dim);}
   :root[data-estilo="cuaderno"] .item{gap:8px; padding:11px 14px 11px 12px;}
-  :root[data-estilo="cuaderno"] .item .n{width:2.1em; padding-top:6px; font-size:.95rem; color:var(--dim); text-align:right;}
   :root[data-estilo="cuaderno"] .item .chk{width:25px; height:25px; border:2px solid var(--ink); border-radius:7px 10px 6px 11px / 10px 6px 11px 7px; margin-top:3px;}
   :root[data-estilo="cuaderno"] .item .chk:checked{background:transparent; border-color:var(--ink);}
   :root[data-estilo="cuaderno"] .item .chk:checked::after{border-color:var(--accent); left:6px; top:-3px; width:9px; height:17px; border-width:0 4px 4px 0;}
@@ -670,7 +666,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="editorial"] .band span:first-child{flex:1 1 auto;}
   :root[data-estilo="editorial"] .band .c{font-family:var(--sf); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase;}
   :root[data-estilo="editorial"] .item{gap:12px; padding:15px 14px; border-bottom:1px solid var(--line);}
-  :root[data-estilo="editorial"] .item .n{font-family:var(--sfh); font-size:1.7rem; line-height:1; width:1.55em; padding-top:0; color:var(--dim); font-weight:700; text-align:right;}
   :root[data-estilo="editorial"] .item .chk{width:22px; height:22px; border-radius:50%; border:1.5px solid var(--ink); margin-top:4px;}
   :root[data-estilo="editorial"] .item .chk:checked::after{left:6px; top:1px; width:6px; height:11px; border-width:0 2.5px 2.5px 0;}
   :root[data-estilo="editorial"] .item .chk:checked{background:var(--ink); border-color:var(--ink);}
@@ -713,7 +708,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="plano"] .band span:first-child{flex:1 1 auto;}
   :root[data-estilo="plano"] .band .c{font-family:var(--sm);}
   :root[data-estilo="plano"] .item{margin:8px 12px; border:1.5px solid var(--ink); background:color-mix(in srgb, var(--bg) 86%, transparent); padding:11px 12px; gap:10px;}
-  :root[data-estilo="plano"] .item .n{font-family:var(--sm); width:auto; min-width:3.2em; color:var(--dim); padding-top:5px; font-size:.72rem;}
   :root[data-estilo="plano"] .item .n::before{content:"A-";}
   :root[data-estilo="plano"] .item .chk{width:24px; height:24px; border:1.5px solid var(--ink); border-radius:0;}
   :root[data-estilo="plano"] .item .chk:checked{background:var(--accent); border-color:var(--ink);}
@@ -755,7 +749,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="llamado"] .item .chk{align-self:center; margin:0 8px; width:24px; height:24px; border:2.5px solid var(--hard); border-radius:0;}
   :root[data-estilo="llamado"] .item .chk:checked{background:var(--hl); border-color:var(--hard);}
   :root[data-estilo="llamado"] .item .chk:checked::after{border-color:#000; left:6px; top:1px; width:6px; height:12px; border-width:0 3px 3px 0;}
-  :root[data-estilo="llamado"] .item .n{align-self:stretch; display:flex; align-items:center; justify-content:center; width:2.5em; padding:0; border-left:2px solid var(--hard); font-family:var(--sm); font-size:.72rem; color:var(--ink);}
   :root[data-estilo="llamado"] .item .body{display:grid; grid-template-columns:minmax(4.2em,6.6em) minmax(0,1fr); border-left:2px solid var(--hard); padding:0; align-items:stretch;}
   :root[data-estilo="llamado"] .item .who{grid-column:1; grid-row:1; margin:0; padding:10px 8px; background:color-mix(in srgb, var(--bar,var(--dim)) 24%, var(--bg)); border-right:2px solid var(--hard); color:var(--ink); font-family:var(--sm); font-size:.68rem; letter-spacing:.04em; word-break:break-word; display:flex; align-items:flex-start;}
   :root[data-estilo="llamado"] .item .who.time{font-size:.8rem; font-weight:700;}
@@ -777,6 +770,9 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="llamado"] .sheet h2{font-family:var(--sfh); letter-spacing:.1em;}
 
   :root[data-estilo] .item .who.none{display:none!important;}
+  /* el número de toma va en la esquina, sin ocupar una columna */
+  :root[data-estilo] .item{position:relative;}
+  :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
 </style>
 </head>
 <body>
