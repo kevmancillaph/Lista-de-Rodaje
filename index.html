@@ -229,6 +229,8 @@
   .item .body{flex:1 1 auto; min-width:0; border-left:3px solid var(--bar, var(--dim)); padding-left:11px;}
   .item[data-type="accion"] .body{border-left-style:dashed;}
   .item .who{font-size:.7rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--bar, var(--dim)); margin-bottom:3px;}
+  .item .who.time{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-variant-numeric:tabular-nums; font-size:.82rem; letter-spacing:.02em; font-weight:700;}
+  .item .who.none{display:none;}
   .item .text{margin:0; font-size:var(--b-size); line-height:1.42; overflow-wrap:anywhere;}
   .item[data-type="accion"] .text{color:var(--dim);}
   .item.tint{background:color-mix(in srgb, var(--bar) 13%, transparent);}
@@ -454,6 +456,14 @@
   :root[data-theme="terminal"] .item.next .n::before{content:"> "; color:var(--accent);}
   :root[data-theme="terminal"] footer{border-top:1px solid var(--accent);}
 
+
+  /* horario de cronograma en los estilos */
+  :root[data-theme="guion"] .item[data-type="accion"] .who.time{display:block; text-align:left; color:var(--ink); font-size:.86rem; letter-spacing:.04em;}
+  :root[data-theme="guion"] .item .who.none{display:none;}
+  :root[data-theme="terminal"] .item[data-type="accion"] .who.time{display:block; color:var(--accent); letter-spacing:0;}
+  :root[data-theme="terminal"] .item[data-type="accion"] .who.time::before{content:"[";}
+  :root[data-theme="terminal"] .item[data-type="accion"] .who.time::after{content:"]";}
+  :root[data-theme="brutal"] .item .who.time{font-family:"Space Mono",ui-monospace,monospace;}
 </style>
 </head>
 <body>
@@ -861,6 +871,18 @@
 
   var EDIT_SVG = '<svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M13.5 3.5l3 3L6 17H3v-3L13.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>';
 
+  // cronogramas: el horario del inicio del texto pasa a la etiqueta (en vez de "Acción")
+  var TIME_RE = /^\s*(\d{1,2}[:.]\d{2})(?:\s*[–—-]\s*(\d{1,2}[:.]\d{2}))?\s*(?:[–—:-]\s*)?([\s\S]*)$/;
+  function splitTime(text){
+    var m = TIME_RE.exec(String(text || '')); if (!m || !m[3].trim()) return null;
+    return {time: m[1].replace('.', ':') + (m[2] ? ' – ' + m[2].replace('.', ':') : ''), rest: m[3].trim()};
+  }
+  function isSchedule(proj){
+    var acc = proj.items.filter(function(i){ return i.type === 'accion'; });
+    var timed = acc.filter(function(i){ return splitTime(i.text); });
+    return timed.length >= 2 && timed.length >= acc.length * 0.3;
+  }
+
   function renderDetail(proj, entering){
     var top = els.main.scrollTop;
     var total = proj.items.length;
@@ -870,7 +892,7 @@
 
     var nextId = nextItemId(proj);
     els.items.innerHTML = '';
-    var lastSec = null;
+    var lastSec = null, sched = isSchedule(proj);
     proj.items.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(it){
       if (it.section && it.section !== lastSec){
         var inSec = proj.items.filter(function(x){ return x.section === it.section; });
@@ -891,7 +913,11 @@
       var n = document.createElement('span'); n.className = 'n mono'; n.textContent = String(it.order).padStart(2,'0');
       var body = document.createElement('div'); body.className = 'body';
       var who = document.createElement('div'); who.className = 'who';
-      who.textContent = it.type === 'dialogo' ? it.speaker : 'Acción';
+      var ti = (sched && it.type === 'accion') ? splitTime(it.text) : null;
+      if (it.type === 'dialogo') who.textContent = it.speaker;
+      else if (ti){ who.textContent = ti.time; who.classList.add('time'); }
+      else if (sched){ who.textContent = ''; who.classList.add('none'); }
+      else who.textContent = 'Acción';
 
       if (editingItemId === it.id){
         var area = document.createElement('textarea'); area.className = 'edit-area'; area.value = it.text;
@@ -914,7 +940,7 @@
 
       var chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'chk';
       chk.checked = !!it.checked; chk.setAttribute('aria-label','Marcar toma');
-      var text = document.createElement('p'); text.className = 'text'; text.textContent = it.text;
+      var text = document.createElement('p'); text.className = 'text'; text.textContent = ti ? ti.rest : it.text;
       body.appendChild(who); body.appendChild(text);
       var eb = document.createElement('button'); eb.className = 'edit-btn'; eb.setAttribute('aria-label','Editar toma'); eb.innerHTML = EDIT_SVG;
       eb.addEventListener('click', function(e){ e.stopPropagation(); editingItemId = it.id; renderDetail(proj); });
