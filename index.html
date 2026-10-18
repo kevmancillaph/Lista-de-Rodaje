@@ -471,7 +471,8 @@
       els.sync.hidden = true; els.settings.hidden = true; els.add.hidden = true;
       els.ticks.hidden = false; els.footer.hidden = false;
       document.body.dataset.ptype = typeOf(proj);
-      els.typeBtn.hidden = false; els.typeBtn.textContent = typeName(typeOf(proj)) + ' ▾';
+      els.typeBtn.hidden = !!proj.shared; els.typeBtn.textContent = typeName(typeOf(proj)) + ' ▾';
+      if (proj.shared) typeOpen = false;
       els.share.hidden = false; els.chips.hidden = true;
       renderTypeRow(proj);
       els.home.hidden = true; els.detail.hidden = false;
@@ -900,6 +901,7 @@
     try{ proj = buildProject(JSON.parse(await decodePayload(raw))); }catch(e){}
     history.replaceState(null, '', location.pathname + (location.hash || ''));
     if (!proj) return false;
+    proj.shared = true;   // recibido por link: sin selector de tipo
     projects.push(proj); saveProjects(); go(proj.id);
     return true;
   }
