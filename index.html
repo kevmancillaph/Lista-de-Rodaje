@@ -869,6 +869,13 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     :root[data-estilo="clasico"] body.enter #items > *, :root[data-estilo="clasico"] body.enter #projectsList > *{animation:cIn .32s ease-out both; animation-delay:calc(var(--i,12) * 35ms);}
     :root[data-estilo="clasico"] .item.pop .chk{animation:cPop .28s cubic-bezier(.3,1.6,.5,1);}
   }
+  /* hojas: entran desde abajo y se pueden arrastrar */
+  .overlay{transition:opacity .22s;}
+  .overlay .sheet{transform:translateY(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1); will-change:transform; touch-action:pan-y; overscroll-behavior:contain;}
+  .overlay.open .sheet{transform:none;}
+  .overlay .sheet.drag{transition:none;}
+  .sheet::before{content:""; display:block; width:42px; height:5px; border-radius:5px; background:var(--dim); opacity:.45; margin:-6px auto 12px;}
+  @media (prefers-reduced-motion:reduce){ .overlay .sheet{transition:none;} }
 </style>
 </head>
 <body>
@@ -1861,5 +1868,50 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   });
 })();
 </script>
+<script>
+/* hojas (ajustes, pegar, compartir): se cierran deslizando hacia abajo, la hoja sigue al dedo */
+(function(){
+  var sheet = null, ov = null, y0 = 0, x0 = 0, dy = 0, t0 = 0, mode = 0, lastY = 0, lastT = 0, vel = 0;
+  function reset(){ if (!sheet) return; sheet.classList.remove('drag'); sheet.style.transform = ''; ov.style.opacity = ''; sheet = null; ov = null; mode = 0; }
+  document.addEventListener('touchstart', function(e){
+    if (e.touches.length !== 1) return;
+    var s = e.target.closest ? e.target.closest('.overlay.open .sheet') : null;
+    if (!s) return;
+    sheet = s; ov = s.parentNode; mode = 0; dy = 0; vel = 0;
+    y0 = lastY = e.touches[0].clientY; x0 = e.touches[0].clientX; t0 = lastT = Date.now();
+  }, {passive:true});
+  document.addEventListener('touchmove', function(e){
+    if (!sheet) return;
+    var t = e.touches[0], d = t.clientY - y0, dx = t.clientX - x0;
+    if (mode === 0){
+      if (Math.abs(d) < 6 && Math.abs(dx) < 6) return;
+      // solo arrastra la hoja si el gesto es vertical hacia abajo y el contenido está arriba del todo
+      if (d > 0 && Math.abs(d) > Math.abs(dx) && sheet.scrollTop <= 0){ mode = 1; sheet.classList.add('drag'); y0 = t.clientY; d = 0; }
+      else { mode = 2; return; }
+    }
+    if (mode !== 1) return;
+    e.preventDefault();
+    dy = Math.max(0, d);
+    var now = Date.now(); if (now > lastT){ vel = (t.clientY - lastY) / (now - lastT); lastY = t.clientY; lastT = now; }
+    sheet.style.transform = 'translateY(' + dy + 'px)';
+    ov.style.opacity = String(Math.max(0.15, 1 - dy / Math.max(240, sheet.offsetHeight)));
+  }, {passive:false});
+  function end(){
+    if (!sheet) return;
+    if (mode !== 1){ reset(); return; }
+    var s = sheet, o = ov, close = dy > Math.min(140, s.offsetHeight * 0.3) || vel > 0.6;
+    s.classList.remove('drag');
+    if (close){
+      s.style.transform = 'translateY(100%)'; o.style.opacity = '0';
+      o.dispatchEvent(new MouseEvent('click', {bubbles:true}));
+      setTimeout(function(){ s.style.transform = ''; o.style.opacity = ''; }, 420);
+    } else { s.style.transform = ''; o.style.opacity = ''; }
+    sheet = null; ov = null; mode = 0;
+  }
+  document.addEventListener('touchend', end, {passive:true});
+  document.addEventListener('touchcancel', end, {passive:true});
+})();
+</script>
+
 </body>
 </html>
