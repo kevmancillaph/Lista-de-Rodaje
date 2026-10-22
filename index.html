@@ -1102,6 +1102,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="suave"] .item.tint{background:linear-gradient(145deg, color-mix(in srgb, var(--bar) 20%, var(--bg)), var(--bg) 75%);}
 
   :root[data-estilo] .item .who.none{display:none!important;}
+
+  /* acción vs. diálogo: lo que se dice va entre comillas y con el color del personaje;
+     lo que se hace va en cursiva, en gris, con barra y etiqueta punteadas */
+  :root .item[data-type="dialogo"] .text::before{content:"\201C"; color:var(--bar,var(--dim)); font-weight:700; margin-right:1px;}
+  :root .item[data-type="dialogo"] .text::after{content:"\201D"; color:var(--bar,var(--dim)); font-weight:700; margin-left:1px;}
+  :root:not([data-estilo="comic"]) .item[data-type="accion"]:not(.checked):not(.next){background:color-mix(in srgb, var(--ink) 5%, transparent)!important;}
+  :root:not([data-estilo="comic"]) .item[data-type="accion"] .text{font-style:italic; color:var(--dim)!important;}
+  :root:not([data-estilo="comic"]):not([data-estilo="llamado"]) .item[data-type="accion"] .body{border-left:3px dashed var(--dim)!important; padding-left:11px!important;}
+  :root:not([data-estilo="comic"]):not([data-estilo="llamado"]) .item[data-type="accion"] .who:not(.time):not(.none){display:inline-block!important; width:fit-content; background:transparent!important; color:var(--dim)!important; border:1px dashed var(--dim)!important; box-shadow:none!important; padding:1px 9px; border-radius:6px; font-size:.66rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; text-align:left;}
+  :root[data-estilo="llamado"] .item[data-type="accion"] .who:not(.time):not(.none){background:transparent!important; color:var(--dim)!important; border-right:2px dashed var(--dim)!important;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
   :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
