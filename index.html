@@ -1112,6 +1112,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root:not([data-estilo="comic"]):not([data-estilo="llamado"]) .item[data-type="accion"] .body{border-left:3px dashed var(--dim)!important; padding-left:11px!important;}
   :root:not([data-estilo="comic"]):not([data-estilo="llamado"]) .item[data-type="accion"] .who:not(.time):not(.none){display:inline-block!important; width:fit-content; background:transparent!important; color:var(--dim)!important; border:1px dashed var(--dim)!important; box-shadow:none!important; padding:1px 9px; border-radius:6px; font-size:.66rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; text-align:left;}
   :root[data-estilo="llamado"] .item[data-type="accion"] .who:not(.time):not(.none){background:transparent!important; color:var(--dim)!important; border-right:2px dashed var(--dim)!important;}
+
+  /* quién habla: color + forma junto al nombre + sangría (personajes 2, 4 y 6 van corridos a la derecha) */
+  .item[data-sp] .who:not(.time):not(.none){font-size:.8rem; font-weight:800; letter-spacing:.08em;}
+  .item[data-sp="1"] .who::before{content:"\25CF  ";}
+  .item[data-sp="2"] .who::before{content:"\25B2  ";}
+  .item[data-sp="3"] .who::before{content:"\25A0  ";}
+  .item[data-sp="4"] .who::before{content:"\25C6  ";}
+  .item[data-sp="5"] .who::before{content:"\2605  ";}
+  .item[data-sp="6"] .who::before{content:"\271A  ";}
+  .item[data-sp="2"] .body, .item[data-sp="4"] .body, .item[data-sp="6"] .body{margin-left:9%;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
   :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
@@ -1646,6 +1656,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       li.dataset.type = it.type; li.dataset.id = it.id; if (it.id === lastToggled) li.classList.add('pop');
       var barColor = (it.type === 'dialogo' && it.color) ? it.color : (it.section ? it.scolor : '');
       if (barColor){ li.style.setProperty('--bar', 'var(--' + barColor + ')'); li.classList.add('tint'); }
+      if (it.type === 'dialogo' && it.color){ li.dataset.sp = String(it.color).replace('sp-', ''); }
 
       var n = document.createElement('span'); n.className = 'n mono'; n.textContent = String(it.order).padStart(2,'0');
       var body = document.createElement('div'); body.className = 'body';
