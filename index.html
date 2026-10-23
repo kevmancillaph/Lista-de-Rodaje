@@ -1281,9 +1281,9 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 <div class="overlay" id="importOverlay">
   <div class="sheet" role="dialog" aria-label="Nuevo proyecto">
     <h2>Pegar proyecto</h2>
-    <p>Pega tu guion o cronograma como texto. Formato: <b>Nombre: lo que dice</b> para lo hablado, <b>(entre paréntesis)</b> para las acciones, <b>## Título</b> para separar escenas. Una línea sin nada de eso cuenta como acción. También acepta el bloque de datos de Claude.</p>
-    <input type="text" id="importTitle" placeholder="Título (opcional, si no, usa la primera línea)" style="margin-bottom:8px">
-    <textarea id="importText" placeholder="Animadora 1: Hoy vamos a bailar toda la noche.&#10;(Plano general de la barra)&#10;Animadora 2: Y vamos a premiar al mejor."></textarea>
+    <p>Pega tu guion o cronograma tal como te lo pasaron. La app detecta el título, las escenas, quién habla y las acciones. Abajo ves lo que detectó antes de cargar. También acepta el bloque de datos (JSON).</p>
+    <textarea id="importText" placeholder="Pega aquí el guion completo, con el título arriba."></textarea>
+    <div class="err" id="importPrev" style="color:var(--dim,#666)"></div>
     <div class="err" id="importErr"></div>
     <div class="btn-row">
       <button class="btn primary" id="importOk">Cargar</button>
@@ -1964,7 +1964,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       renderThemes(); renderSizes(); renderTrash(); renderSyncDetail();
       $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
     } else if (s === 'importOverlay'){
-      $('importErr').textContent = ''; $('importText').value = ''; $('importTitle').value = '';
+      $('importErr').textContent = ''; $('importText').value = ''; $('importPrev').textContent = '';
       setTimeout(function(){ $('importText').focus(); }, 80);
     } else sheetByUs = false;
   }
@@ -2025,41 +2025,115 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
   /* ---------- texto plano -> proyecto ---------- */
   function parseScriptText(raw, titleIn){
-    var ACT = /^(acci[oó]n|plano|visual|b-?roll|corte|c[aá]mara|nota|texto en pantalla|m[uú]sica|audio|sfx|fondo|transici[oó]n|escena|toma|cta|locaci[oó]n|vestuario)\s*[:\-–]/i;
-    var HEAD = /^(?:#{1,3}\s*(.+)|((?:escena|parte|bloque|d[ií]a|cena|acto)\s*\d+[^:]{0,40}):?)$/i;
-    var lines = String(raw).replace(/\r/g, '').split('\n').map(function(l){ return l.replace(/^\s*[-•·*]\s+/, '').trim(); });
+    var EMO = /^[\p{Extended_Pictographic}️‍⃣\s]+/u;
+    var ACT_EMO = /^[\u{1F3A5}\u{1F4F9}\u{1F3AC}\u{1F4F8}\u{1F39E}\u{1F3B5}\u{1F3B6}\u{1F3A7}\u{1F50A}\u{1F4CD}\u{1F3AF}⚡\u{1F4F1}\u{1F4A1}\u{1F3A8}]/u;
+    var VOX_EMO = /^[\u{1F5E3}\u{1F4AC}\u{1F399}\u{1F3A4}\u{1F4E2}]/u;
+    var ACT = /^(acci[oó]n|a[cç][aã]o|plano|visual|b-?roll|corte|c[aá]mara|texto en pantalla|texto na tela|on screen|m[uú]sica|[aá]udio|audio|sfx|fondo|transici[oó]n|transi[cç][aã]o|toma|tomada|cta|locaci[oó]n|vestuario|cen[aá]rio|escenario|encuadre|ambiente|nota|atenci[oó]n|importante|ojo|tip|ejemplo|observaci[oó]n|observaciones|duraci[oó]n|formato|objetivo|tema|tono|plataforma|descripci[oó]n|caption|hashtags?)\s*[:\-–—]/i;
+    var HEAD_NUM = /^(escena|cena|scene|parte|bloque|d[ií]a|acto|secci[oó]n|se[cç][aã]o|toma|clip)\s*\d+/i;
+    var HEAD_WORD = /^(hook|gancho|intro|introducci[oó]n|desarrollo|cierre|cta|outro|final|conclusi[oó]n|conclus[aã]o|apertura|abertura|presentaci[oó]n)\s*(\([^)]*\))?\s*[:\-–—]?\s*$/i;
+    var HEAD_LBL = /^(hook|gancho|intro|introducci[oó]n|desarrollo|cierre|cta|outro|final|conclusi[oó]n|conclus[aã]o|apertura|abertura|presentaci[oó]n|problema|soluci[oó]n|resultado|antes|despu[eé]s)\s*(\([^)]*\))?\s*[:\-–—]\s*(\S.*)$/i;
+    var STEP = /^(paso|step|passo|punto|tip|consejo|error|regla)\s*(\d+)\s*[.:)\-–—]\s*(\S.*)$/i;
+    var GUION = /^(gui[oó]n|roteiro|script)\s*[:：]\s*(.+)$/i;
+    var TITLE_KEY = /^(t[ií]tulo|title|t[ií]tulo del video|t[ií]tulo do v[ií]deo|nombre del proyecto)\s*[:：]\s*(.+)$/i;
+    var LABEL = /^([^:：“"«\(\[]{1,32}?)\s*(\([^)]*\))?\s*[:：]\s*(.*)$/;
+    var TIME_LINE = /^\[?\d{1,2}[:.]\d{2}/;
     var clean = function(t){ return t.replace(/\*\*|__/g, '').replace(/^[“"«'‘]+|[”"»'’]+$/g, '').trim(); };
-    var title = titleIn || '', items = [], section = '', first = true;
+    var plain = function(t){ return t.replace(/\*\*|__/g, '').replace(EMO, '').trim(); };
+    var okName = function(n){ return n && !/^[\d\s.:]+$/.test(n) && n.split(/\s+/).length <= 4 && !ACT.test(n + ':') && !/[.!?]$/.test(n); };
+
+    var lines = String(raw).replace(/\r/g, '').split('\n').map(function(l){ return l.replace(/^\s*(?:[-•·▪►→]|\d{1,2}[.)])\s+/, '').trim(); });
+    // pasada previa: ¿hay etiquetas "Nombre: texto"? ¿es un cronograma?
+    var labels = 0, timed = 0, body = 0;
     lines.forEach(function(l){
-      if (!l) return;
-      var isHead = HEAD.exec(l);
-      if (first){
-        first = false;
-        if (!titleIn && !isHead && !/^\(|^\[|^[“"]/.test(l) && !/^[^:]{1,28}:\s*\S/.test(l)){ title = l.replace(/^#+\s*/, '').replace(/\*\*|__/g, '').trim(); return; }
-      }
-      if (isHead){ section = clean(isHead[1] || isHead[2]).slice(0, 60); return; }
-      var m, text;
-      if ((m = /^[\(\[](.+)[\)\]]$/.exec(l))){ items.push({type:'accion', text:clean(m[1]), section:section}); return; }
-      if (ACT.test(l)){ items.push({type:'accion', text:clean(l), section:section}); return; }
-      if ((m = /^([^:“"\(\[]{1,28}):\s*(.+)$/.exec(l)) && !/^[\d\s.]+$/.test(m[1])){
-        var name = m[1].replace(/\*\*|__/g, '').replace(/^[\s\W_]+/, '').trim();
-        if (name){ items.push({type:'dialogo', speaker:name, text:clean(m[2]), section:section}); return; }
-      }
-      if (/^[“"«]/.test(l)){ items.push({type:'dialogo', speaker:'Voz', text:clean(l), section:section}); return; }
-      items.push({type:'accion', text:clean(l), section:section});
+      if (!l) return; body++;
+      var t = plain(l), m = LABEL.exec(t);
+      if (TIME_LINE.test(t)) timed++;
+      else if (m && okName(m[1].trim()) && !HEAD_NUM.test(t) && !TITLE_KEY.test(t) && !HEAD_LBL.test(t) && !STEP.test(t) && !GUION.test(t)) labels++;
     });
-    return {title: title, items: items};
+    var schedule = body > 0 && timed >= Math.max(2, body * 0.3);
+    var hasLabels = labels >= 1;
+
+    var title = titleIn || '', items = [], section = '', sections = {}, pending = '', titleDone = !!titleIn;
+    function add(it){ it.section = section; items.push(it); }
+    for (var i = 0; i < lines.length; i++){
+      var l = lines[i];
+      if (!l){ pending = ''; continue; }
+      if (/^[-=_~*#]{3,}$/.test(l)){ pending = ''; continue; }
+      var raw1 = l, t = plain(l), emo = (l.replace(/^\*\*|^__/, '').match(ACT_EMO) ? 'a' : l.replace(/^\*\*|^__/, '').match(VOX_EMO) ? 'v' : '');
+      var mt = TITLE_KEY.exec(t);
+      if (mt && !titleIn){ title = clean(mt[2]); titleDone = true; continue; }
+      // título automático: primera línea que no parezca guion
+      if (!titleDone){
+        titleDone = true;
+        var cand = t.replace(/^#+\s*/, '').replace(/^(roteiro|gui[oó]n|script)\s*[—–\-:|]\s*/i, '').trim();
+        var looksScript = /^[\(\[“"«]/.test(t) || ACT.test(t) || HEAD_WORD.test(t) || HEAD_NUM.test(t) || emo === 'v' || (LABEL.test(t) && okName(LABEL.exec(t)[1].trim()) && LABEL.exec(t)[3]);
+        if (cand && cand.length <= 110 && !looksScript){ title = cand.replace(/\*+/g, ''); continue; }
+      }
+      var g = GUION.exec(t);
+      if (g){ var gt = clean(g[2]); if (!title) title = gt; else if (title.toLowerCase().indexOf(gt.toLowerCase()) < 0) title += ' — ' + gt; continue; }
+      var hl = HEAD_LBL.exec(t) || STEP.exec(t);
+      if (hl){
+        section = (STEP.test(t) ? hl[1].charAt(0).toUpperCase() + hl[1].slice(1).toLowerCase() + ' ' + hl[2] : hl[1].charAt(0).toUpperCase() + hl[1].slice(1).toLowerCase()).slice(0, 60);
+        var restH = clean(STEP.test(t) ? hl[3] : hl[3]);
+        if (restH) add({type:'dialogo', speaker:'Voz', text:restH});
+        pending = ''; continue;
+      }
+      var h = /^#{1,4}\s*(.+)$/.exec(t);
+      if (h){ section = clean(h[1]).slice(0, 60); pending = ''; continue; }
+      if (HEAD_NUM.test(t) && !/^[^:]{0,24}:\s*\S.{40,}/.test(t) || HEAD_WORD.test(t)){
+        section = clean(t.replace(/[:：]\s*$/, '')).slice(0, 60); pending = ''; continue;
+      }
+      var m;
+      m = /^[\(\[](.+)[\)\]]$/.exec(t) || (/^\*[^*].*[^*]\*$/.test(raw1) ? /^\*(.+)\*$/.exec(raw1) : null);
+      if (m){ add({type:'accion', text:clean(m[1])}); continue; }
+      if (ACT.test(t)){ add({type:'accion', text:clean(t)}); pending = ''; continue; }
+      if (emo === 'a'){ add({type:'accion', text:clean(t)}); pending = ''; continue; }
+      if (emo === 'v'){ add({type:'dialogo', speaker:'Voz', text:clean(t)}); continue; }
+      m = LABEL.exec(t);
+      if (m && okName(m[1].trim()) && !TIME_LINE.test(t)){
+        var name = m[1].replace(/^[\s\W_]+/, '').trim(), note = m[2] ? m[2].replace(/^\(|\)$/g, '').trim() : '', rest = clean(m[3] || '');
+        if (name){
+          if (note) add({type:'accion', text:note});
+          if (rest){ add({type:'dialogo', speaker:name, text:rest}); pending = name; }
+          else pending = name;
+          continue;
+        }
+      }
+      if (pending){
+        var last = items[items.length - 1];
+        if (last && last.type === 'dialogo' && last.speaker === pending && !(/^[“"«]/.test(t) && false)) last.text += ' ' + clean(t);
+        else add({type:'dialogo', speaker:pending, text:clean(t)});
+        continue;
+      }
+      if (/^[“"«]/.test(t)){ add({type:'dialogo', speaker:'Voz', text:clean(t)}); continue; }
+      if (schedule || hasLabels){
+        var prev = items[items.length - 1];
+        if (!schedule && prev && prev.type === 'dialogo' && lines[i - 1]){ prev.text += ' ' + clean(t); continue; }
+        add({type:'accion', text:clean(t)}); continue;
+      }
+      add({type:'dialogo', speaker:'Voz', text:clean(t)});
+    }
+    var sp = {}, nd = 0, na = 0, secs = {};
+    items.forEach(function(it){ if (it.type === 'dialogo'){ nd++; sp[it.speaker] = 1; } else na++; if (it.section) secs[it.section] = 1; });
+    return {title: title, items: items, stats: {dialogos: nd, acciones: na, escenas: Object.keys(secs).length, hablantes: Object.keys(sp)}};
   }
 
   els.add.addEventListener('click', function(){ openSheet('/nuevo'); });
   $('importCancel').addEventListener('click', closeSheet);
   $('importOverlay').addEventListener('click', function(e){ if (e.target === $('importOverlay')) closeSheet(); });
+  $('importText').addEventListener('input', function(){
+    var v = this.value.trim(), el = $('importPrev'); $('importErr').textContent = '';
+    if (!v){ el.textContent = ''; return; }
+    if (v.charAt(0) === '{'){ el.textContent = 'Bloque de datos (JSON).'; return; }
+    var d = parseScriptText(v, ''), st = d.stats;
+    el.textContent = 'Título: ' + (d.title || '(sin título)') + ' · ' + st.dialogos + ' líneas habladas · ' + st.acciones + ' acciones · ' + st.escenas + ' escenas' + (st.hablantes.length ? ' · Hablan: ' + st.hablantes.join(', ') : '');
+  });
   $('importOk').addEventListener('click', function(){
     var raw = $('importText').value.trim();
     if (!raw){ $('importErr').textContent = 'Pega primero el bloque.'; return; }
     var data = null;
     if (raw.charAt(0) === '{'){ try{ data = JSON.parse(raw); }catch(e){} }
-    if (!data) data = parseScriptText(raw, $('importTitle').value.trim());
+    if (!data) data = parseScriptText(raw, '');
     var proj = buildProject(data);
     if (!proj){ $('importErr').textContent = 'No encontré líneas para cargar. Revisa el texto.'; return; }
     projects.push(proj); saveProjects(); sheetByUs = false;
