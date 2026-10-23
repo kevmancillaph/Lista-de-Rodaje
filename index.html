@@ -2423,7 +2423,13 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 .tp-count{position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:38vmin; font-weight:800; line-height:1; background:rgba(0,0,0,.85); color:#ffd640; pointer-events:none; font-variant-numeric:tabular-nums;}
 .tp-count.on{display:flex;}
 .tp-top{position:absolute; top:max(8px, env(safe-area-inset-top, 0px)); right:max(8px, env(safe-area-inset-right, 0px)); z-index:3;}
-.tp-bar{flex:0 0 auto; display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; align-items:center; padding:10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background:#111; border-top:1px solid #2a2a2a;}
+.tp.run .tp-bar, .tp.run .tp-top, .tp.jumping .tp-bar{display:none;}
+.tp-done{text-decoration:line-through; text-decoration-thickness:.08em; opacity:.4;}
+.tp-jr{display:flex; align-items:stretch; border-bottom:1px solid #1c1c1c;}
+.tp-jc{flex:0 0 56px; background:none; border:0; border-right:1px solid #1c1c1c; color:#ffd640; font-size:1.5rem; cursor:pointer;}
+.tp-jr .tp-ji{border-bottom:0;}
+.tp-jr.done .tp-ji{text-decoration:line-through; opacity:.5;}
+.tp-bar{position:absolute; left:0; right:0; bottom:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; align-items:center; padding:10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background:#111; border-top:1px solid #2a2a2a;}
 .tp-grp{display:flex; align-items:center; gap:6px;}
 .tp-lbl{font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:#9aa0aa;}
 .tp-val{min-width:3em; text-align:center; font-variant-numeric:tabular-nums; font-weight:700; font-size:.95rem;}
@@ -2486,7 +2492,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     Array.prototype.forEach.call(items.querySelectorAll('li.item'), function(li){
       var t = li.querySelector('.text'); if (!t) return;
       var text = (t.textContent || '').trim(); if (!text) return;
-      var p = document.createElement('span'); p.className = 'tp-line';
+      var p = document.createElement('span'); p.className = 'tp-line'; p.dataset.id = li.dataset.id || ''; if (li.classList.contains('checked')) p.className += ' tp-done';
       if (li.dataset.type === 'accion'){
         if (!st.acts) return;
         p.className += ' tp-act'; p.textContent = '[' + text + ']'; col.appendChild(p); return;
@@ -2520,6 +2526,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
   function label(){
     var b = $('tpPlay'), atEnd = maxScroll() > 0 && pos >= maxScroll() - 1;
+    ov.classList.toggle('run', playing || counting);
     b.textContent = counting ? 'Cancelar' : playing ? 'Pausa' : atEnd ? 'Otra vez' : pos > 2 ? 'Seguir' : 'Iniciar';
     $('tpSizeV').textContent = st.size;
     $('tpWpmV').textContent = st.wpm;
@@ -2596,16 +2603,27 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var L = $('tpJList'); L.innerHTML = ''; var k = 0;
     Array.prototype.forEach.call(col.children, function(el, idx){
       if (el.classList.contains('tp-empty')) return;
-      k++; var b = document.createElement('button'); b.type = 'button'; b.className = 'tp-ji'; b.dataset.i = idx;
+      k++; var row = document.createElement('div'); row.className = 'tp-jr' + (el.classList.contains('tp-done') ? ' done' : ''); row.dataset.id = el.dataset.id;
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'tp-jc'; c.dataset.id = el.dataset.id; c.setAttribute('aria-label', 'Marcar o desmarcar'); c.textContent = el.classList.contains('tp-done') ? '\u2611' : '\u2610'; row.appendChild(c);
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'tp-ji'; b.dataset.i = idx;
       var who = el.querySelector('.tp-who'), txt = (el.textContent || '').replace(who ? who.textContent : '', '').trim();
       if (txt.length > 90) txt = txt.slice(0, 90) + '…';
       b.innerHTML = '<b></b><span></span>';
       b.firstChild.textContent = k + ' · ' + (who ? who.textContent : 'Acción'); if (who) b.firstChild.style.color = who.style.color;
-      b.lastChild.textContent = txt; L.appendChild(b);
+      b.lastChild.textContent = txt; row.appendChild(b); L.appendChild(row);
     });
-    $('tpJump').classList.add('on');
+    $('tpJump').classList.add('on'); ov.classList.add('jumping');
   }
-  function closeJump(){ $('tpJump').classList.remove('on'); }
+  function closeJump(){ $('tpJump').classList.remove('on'); ov.classList.remove('jumping'); }
+  function toggleReal(id, row){
+    var chk = items.querySelector('li.item[data-id="' + id + '"] input.chk'); if (!chk) return;
+    chk.click();
+    setTimeout(function(){
+      var li = items.querySelector('li.item[data-id="' + id + '"]'), done = !!(li && li.classList.contains('checked'));
+      Array.prototype.forEach.call(col.children, function(p){ if (p.dataset.id === id) p.classList.toggle('tp-done', done); });
+      row.classList.toggle('done', done); row.firstChild.textContent = done ? '\u2611' : '\u2610';
+    }, 80);
+  }
   function jumpTo(idx){
     var el = col.children[idx]; if (!el) return;
     cancelCount(); stop();
@@ -2619,7 +2637,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   $('tpRestart').addEventListener('click', restart);
   $('tpGo').addEventListener('click', openJump);
   $('tpJClose').addEventListener('click', closeJump);
-  $('tpJList').addEventListener('click', function(e){ var b = e.target.closest('.tp-ji'); if (b) jumpTo(parseInt(b.dataset.i, 10)); });
+  $('tpJList').addEventListener('click', function(e){ var c = e.target.closest('.tp-jc'); if (c){ toggleReal(c.dataset.id, c.parentNode); return; } var b = e.target.closest('.tp-ji'); if (b) jumpTo(parseInt(b.dataset.i, 10)); });
   document.addEventListener('fullscreenchange', function(){ if (ov.classList.contains('open')) setTimeout(function(){ relayout(ratio()); }, 100); });
   sc.addEventListener('click', function(){ if (ov.classList.contains('open')) toggle(); });
   sc.addEventListener('scroll', function(){ if (Math.abs(sc.scrollTop - pos) > 3) pos = sc.scrollTop; if (!playing && !counting) label(); }, {passive:true});
