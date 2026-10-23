@@ -1291,6 +1291,9 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     <p>Pega tu guion o cronograma tal como te lo pasaron. La app detecta el título, las escenas, quién habla y las acciones. Abajo ves lo que detectó antes de cargar. También acepta el bloque de datos (JSON).</p>
     <textarea id="importText" placeholder="Pega aquí el guion completo, con el título arriba."></textarea>
     <div class="err" id="importPrev" style="color:var(--dim,#666)"></div>
+    <div id="importSplit" hidden style="margin:6px 0 2px;font-size:.88rem">Solo hay un hablante. ¿Repartir sus líneas entre
+      <select id="importN" style="font:inherit;padding:4px 6px;margin-left:4px"><option value="1">1 (no repartir)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+      hablantes, alternando?</div>
     <div class="err" id="importErr"></div>
     <div class="btn-row">
       <button class="btn primary" id="importOk">Cargar</button>
@@ -1973,7 +1976,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       renderThemes(); renderSizes(); renderTrash(); renderSyncDetail(); renderCloud();
       $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
     } else if (s === 'importOverlay'){
-      $('importErr').textContent = ''; $('importText').value = ''; $('importPrev').textContent = '';
+      $('importErr').textContent = ''; $('importText').value = ''; $('importPrev').textContent = ''; $('importN').value = '1'; $('importSplit').hidden = true;
       setTimeout(function(){ $('importText').focus(); }, 80);
     } else sheetByUs = false;
   }
@@ -2138,19 +2141,41 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   els.add.addEventListener('click', function(){ openSheet('/nuevo'); });
   $('importCancel').addEventListener('click', closeSheet);
   $('importOverlay').addEventListener('click', function(e){ if (e.target === $('importOverlay')) closeSheet(); });
-  $('importText').addEventListener('input', function(){
-    var v = this.value.trim(), el = $('importPrev'); $('importErr').textContent = '';
-    if (!v){ el.textContent = ''; return; }
-    if (v.charAt(0) === '{'){ el.textContent = 'Bloque de datos (JSON).'; return; }
+  function splitSpeakers(d, n){
+    var base = null, k = 0;
+    d.items.forEach(function(it){
+      if (it.type !== 'dialogo') return;
+      if (base === null) base = it.speaker;
+      it.speaker = base + ' ' + ((k++ % n) + 1);
+    });
+    var sp = {}; d.items.forEach(function(it){ if (it.type === 'dialogo') sp[it.speaker] = 1; });
+    d.stats.hablantes = Object.keys(sp);
+    return d;
+  }
+  function refreshImport(){
+    var v = $('importText').value.trim(), el = $('importPrev'); $('importErr').textContent = '';
+    if (!v){ el.textContent = ''; $('importSplit').hidden = true; return; }
+    if (v.charAt(0) === '{'){ el.textContent = 'Bloque de datos (JSON).'; $('importSplit').hidden = true; return; }
     var d = parseScriptText(v, ''), st = d.stats;
+    var single = st.hablantes.length === 1 && st.dialogos >= 2;
+    $('importSplit').hidden = !single && $('importN').value === '1';
+    if (!single && $('importN').value === '1') $('importSplit').hidden = true;
+    var n = parseInt($('importN').value, 10) || 1;
+    if (single){ $('importSplit').hidden = false; }
+    else if (n > 1 && !$('importSplit').hidden){ /* ya repartido: se mantiene visible para poder volver a 1 */ }
+    if (n > 1 && (single || !$('importSplit').hidden)){
+      var raw0 = parseScriptText(v, ''); if (raw0.stats.hablantes.length === 1){ d = splitSpeakers(raw0, n); st = d.stats; }
+    }
     el.textContent = 'Título: ' + (d.title || '(sin título)') + ' · ' + st.dialogos + ' líneas habladas · ' + st.acciones + ' acciones · ' + st.escenas + ' escenas' + (st.hablantes.length ? ' · Hablan: ' + st.hablantes.join(', ') : '');
-  });
+  }
+  $('importText').addEventListener('input', function(){ $('importN').value = '1'; refreshImport(); });
+  $('importN').addEventListener('change', refreshImport);
   $('importOk').addEventListener('click', function(){
     var raw = $('importText').value.trim();
     if (!raw){ $('importErr').textContent = 'Pega primero el bloque.'; return; }
     var data = null;
     if (raw.charAt(0) === '{'){ try{ data = JSON.parse(raw); }catch(e){} }
-    if (!data) data = parseScriptText(raw, '');
+    if (!data){ data = parseScriptText(raw, ''); var nn = parseInt($('importN').value, 10) || 1; if (nn > 1 && data.stats.hablantes.length === 1) splitSpeakers(data, nn); }
     var proj = buildProject(data);
     if (!proj){ $('importErr').textContent = 'No encontré líneas para cargar. Revisa el texto.'; return; }
     projects.push(proj); saveProjects(); sheetByUs = false;
