@@ -455,6 +455,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   .legend{flex:1 1 auto; display:flex; flex-wrap:wrap; gap:4px 12px; max-height:4.6em; overflow-y:auto; font-size:.74rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;}
   .legend span{display:flex; align-items:center; gap:5px;}
   .legend i{width:10px; height:10px; background:var(--c); border-radius:1px; flex:0 0 auto;}
+  .legend-edit{flex:0 0 auto; background:none; border:1px solid currentColor; color:inherit; border-radius:6px; width:26px; height:26px; font-size:.9rem; line-height:1; cursor:pointer; opacity:.8;}
+  .legend span{cursor:pointer;}
   .jump{flex:0 0 auto; font-size:.74rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:8px 10px; border:1px solid var(--ink); border-radius:4px; background:transparent; cursor:pointer;}
   .jump:active{background:var(--row);}
 
@@ -1676,6 +1678,46 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     return timed.length >= 2 && timed.length >= acc.length * 0.3;
   }
 
+
+  /* ---------- cambiar nombres de hablantes ---------- */
+  var renameOv = null;
+  function openRename(proj){
+    if (!renameOv){
+      renameOv = document.createElement('div'); renameOv.className = 'xp'; renameOv.setAttribute('role', 'dialog');
+      renameOv.innerHTML = '<div class="xp-sheet"><h2>Nombres de los hablantes</h2><p>Cambia el nombre y se actualiza en todas sus líneas.</p><div id="rnList"></div><button class="xp-b" id="rnSave" type="button" style="text-align:center;font-weight:800">Guardar</button><button class="xp-b" id="rnX" type="button" style="text-align:center">Cancelar</button></div>';
+      document.body.appendChild(renameOv);
+      renameOv.addEventListener('click', function(e){ if (e.target === renameOv) renameOv.classList.remove('open'); });
+      document.getElementById('rnX').addEventListener('click', function(){ renameOv.classList.remove('open'); });
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape') renameOv.classList.remove('open'); });
+      window.addEventListener('hashchange', function(){ renameOv.classList.remove('open'); });
+    }
+    var list = document.getElementById('rnList'); list.innerHTML = '';
+    (proj.speakers || []).forEach(function(sp, i){
+      var row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 0 8px';
+      var sq = document.createElement('i'); sq.style.cssText = 'flex:0 0 14px;height:14px;background:var(--' + sp.color + ')';
+      var inp = document.createElement('input'); inp.type = 'text'; inp.value = sp.name; inp.maxLength = 30; inp.dataset.old = sp.name;
+      inp.style.cssText = 'flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px;color:var(--ink);background:var(--row);border:1px solid var(--line);border-radius:6px';
+      inp.setAttribute('aria-label', 'Nombre del hablante ' + (i + 1));
+      inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('rnSave').click(); } });
+      row.appendChild(sq); row.appendChild(inp); list.appendChild(row);
+    });
+    document.getElementById('rnSave').onclick = function(){
+      var map = {}, changed = false;
+      Array.prototype.forEach.call(list.querySelectorAll('input'), function(inp){
+        var nv = inp.value.trim().slice(0, 30), old = inp.dataset.old;
+        if (nv && nv !== old){ map[old] = nv; changed = true; }
+      });
+      renameOv.classList.remove('open');
+      if (!changed) return;
+      (proj.speakers || []).forEach(function(sp){ if (map[sp.name]) sp.name = map[sp.name]; });
+      proj.items.forEach(function(it){ if (it.type === 'dialogo' && map[it.speaker]) it.speaker = map[it.speaker]; });
+      saveProjects();
+      render();
+    };
+    renameOv.classList.add('open');
+    var f = list.querySelector('input'); if (f) setTimeout(function(){ try{ f.focus(); f.select(); }catch(e){} }, 80);
+  }
+
   function renderDetail(proj, entering){
     var top = els.main.scrollTop;
     var total = proj.items.length;
@@ -1768,6 +1810,11 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       sq.style.setProperty('--c', 'var(--' + sp.color + ')');
       s.appendChild(sq); s.appendChild(document.createTextNode(sp.name)); els.legend.appendChild(s);
     });
+    if ((proj.speakers || []).length){
+      var eb = document.createElement('button'); eb.type = 'button'; eb.className = 'legend-edit'; eb.textContent = '✎'; eb.setAttribute('aria-label', 'Cambiar nombres de los hablantes'); eb.title = 'Cambiar nombres';
+      eb.addEventListener('click', function(){ openRename(proj); }); els.legend.appendChild(eb);
+    }
+    els.legend.onclick = function(e){ if (e.target.closest && e.target.closest('span')) openRename(proj); };
     els.jump.hidden = !nextId;
 
     if (entering){
