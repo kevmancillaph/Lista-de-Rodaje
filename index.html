@@ -2431,13 +2431,15 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 .tp-jc{flex:0 0 56px; background:none; border:0; border-right:1px solid #1c1c1c; color:#ffd640; font-size:1.5rem; cursor:pointer;}
 .tp-jr .tp-ji{border-bottom:0;}
 .tp-jr.done .tp-ji{text-decoration:line-through; opacity:.5;}
-.tp-bar{position:absolute; left:0; right:0; bottom:0; z-index:5; display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; align-items:center; padding:10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background:#111; border-top:1px solid #2a2a2a;}
+.tp-bar{position:absolute; left:0; right:0; bottom:0; z-index:5; display:flex; flex-wrap:wrap; gap:6px 8px; justify-content:center; align-items:center; padding:8px max(12px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background:#111; border-top:1px solid #2a2a2a;}
 .tp-grp{display:flex; align-items:center; gap:6px;}
 .tp-lbl{font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:#9aa0aa;}
 .tp-val{min-width:3em; text-align:center; font-variant-numeric:tabular-nums; font-weight:700; font-size:.95rem;}
-.tp-b{min-width:44px; height:44px; padding:0 12px; border-radius:10px; border:1px solid #3a3a3a; background:#1c1c1c; color:#fff; font:700 .95rem system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; cursor:pointer;}
+.tp-sets{display:none; width:100%; flex-wrap:wrap; gap:8px 14px; justify-content:center; padding-top:4px;}
+.tp.sets .tp-sets{display:flex;}
+.tp-b{min-width:40px; height:40px; padding:0 11px; border-radius:10px; border:1px solid #3a3a3a; background:#1c1c1c; color:#fff; font:700 .95rem system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; cursor:pointer;}
 .tp-b:active{background:#2c2c2c;}
-.tp-b.main{background:#ffd640; color:#000; border-color:#ffd640; min-width:104px;}
+.tp-b.main{background:#ffd640; color:#000; border-color:#ffd640; min-width:92px;}
 .tp-b[aria-pressed="true"]{background:#fff; color:#000; border-color:#fff;}
 .tp-jump{position:absolute; inset:0; z-index:4; display:none; flex-direction:column; background:#000;}
 .tp-jump.on{display:flex;}
@@ -2479,9 +2481,12 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       '<button class="tp-b main" id="tpPlay" type="button">Iniciar</button>' +
       '<button class="tp-b" id="tpRestart" type="button">Reiniciar</button>' +
       '<button class="tp-b" id="tpGo" type="button">Ir a…</button>' +
+      '<button class="tp-b" id="tpSet" type="button" aria-pressed="false">Ajustes</button>' +
+      '<div class="tp-sets" id="tpSets">' +
       '<div class="tp-grp"><span class="tp-lbl">Letra</span><button class="tp-b" id="tpSm" type="button" aria-label="Letra más chica">A&minus;</button><span class="tp-val" id="tpSizeV"></span><button class="tp-b" id="tpLg" type="button" aria-label="Letra más grande">A+</button></div>' +
       '<div class="tp-grp"><span class="tp-lbl">Velocidad</span><button class="tp-b" id="tpSlow" type="button" aria-label="Más lento">&minus;</button><span class="tp-val" id="tpWpmV"></span><button class="tp-b" id="tpFast" type="button" aria-label="Más rápido">+</button></div>' +
       '<div class="tp-grp"><button class="tp-b" id="tpCountB" type="button"></button><button class="tp-b" id="tpActs" type="button" aria-pressed="false">Acciones</button></div>' +
+      '</div>' +
     '</div>';
   document.body.appendChild(ov);
   function $(id){ return document.getElementById(id); }
@@ -2589,7 +2594,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     if (playing){ stop(); return; }
     var m = maxScroll();
     if (m > 0 && pos >= m - 1){ pos = 0; sc.scrollTop = 0; }
-    if (pos <= 2 && st.count > 0) countdown(st.count); else begin();
+    if (st.count > 0) countdown(st.count); else begin();
   }
   function restart(){ cancelCount(); stop(); pos = 0; sc.scrollTop = 0; label(); }
 
@@ -2638,6 +2643,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   $('tpPlay').addEventListener('click', toggle);
   $('tpRestart').addEventListener('click', restart);
   $('tpGo').addEventListener('click', openJump);
+  $('tpSet').addEventListener('click', function(){ var on = ov.classList.toggle('sets'); $('tpSet').setAttribute('aria-pressed', on ? 'true' : 'false'); });
   $('tpJClose').addEventListener('click', closeJump);
   $('tpJList').addEventListener('click', function(e){ var c = e.target.closest('.tp-jc'); if (c){ toggleReal(c.dataset.id, c.parentNode); return; } var b = e.target.closest('.tp-ji'); if (b) jumpTo(parseInt(b.dataset.i, 10)); });
   document.addEventListener('fullscreenchange', function(){ if (ov.classList.contains('open')) setTimeout(function(){ relayout(ratio()); }, 100); });
