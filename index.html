@@ -455,7 +455,6 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   .legend{flex:1 1 auto; display:flex; flex-wrap:wrap; gap:4px 12px; max-height:4.6em; overflow-y:auto; font-size:.74rem; font-weight:700; letter-spacing:.05em; text-transform:uppercase;}
   .legend span{display:flex; align-items:center; gap:5px;}
   .legend i{width:10px; height:10px; background:var(--c); border-radius:1px; flex:0 0 auto;}
-  .legend-edit{flex:0 0 auto; background:none; border:1px solid currentColor; color:inherit; border-radius:6px; width:26px; height:26px; font-size:.9rem; line-height:1; cursor:pointer; opacity:.8;}
   .legend span{cursor:pointer;}
   .jump{flex:0 0 auto; font-size:.74rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:8px 10px; border:1px solid var(--ink); border-radius:4px; background:transparent; cursor:pointer;}
   .jump:active{background:var(--row);}
@@ -1679,43 +1678,41 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
 
 
-  /* ---------- cambiar nombres de hablantes ---------- */
-  var renameOv = null;
-  function openRename(proj){
+  /* ---------- cambiar nombre y color de un hablante ---------- */
+  var renameOv = null, rnColor = null;
+  function openRename(proj, sp){
     if (!renameOv){
       renameOv = document.createElement('div'); renameOv.className = 'xp'; renameOv.setAttribute('role', 'dialog');
-      renameOv.innerHTML = '<div class="xp-sheet"><h2>Nombres de los hablantes</h2><p>Cambia el nombre y se actualiza en todas sus líneas.</p><div id="rnList"></div><button class="xp-b" id="rnSave" type="button" style="text-align:center;font-weight:800">Guardar</button><button class="xp-b" id="rnX" type="button" style="text-align:center">Cancelar</button></div>';
+      renameOv.innerHTML = '<div class="xp-sheet"><h2>Hablante</h2><p>El cambio se aplica en todas sus líneas.</p><input type="text" id="rnName" maxlength="30" autocomplete="off" style="width:100%;font:inherit;font-size:1rem;padding:10px;margin:0 0 12px;color:var(--ink);background:var(--row);border:1px solid var(--line);border-radius:6px" aria-label="Nombre"><div id="rnCols" style="display:flex;gap:10px;margin:0 0 14px;flex-wrap:wrap"></div><button class="xp-b" id="rnSave" type="button" style="text-align:center;font-weight:800">Guardar</button><button class="xp-b" id="rnX" type="button" style="text-align:center">Cancelar</button></div>';
       document.body.appendChild(renameOv);
-      renameOv.addEventListener('click', function(e){ if (e.target === renameOv) renameOv.classList.remove('open'); });
-      document.getElementById('rnX').addEventListener('click', function(){ renameOv.classList.remove('open'); });
-      document.addEventListener('keydown', function(e){ if (e.key === 'Escape') renameOv.classList.remove('open'); });
-      window.addEventListener('hashchange', function(){ renameOv.classList.remove('open'); });
+      var closeIt = function(){ renameOv.classList.remove('open'); };
+      renameOv.addEventListener('click', function(e){ if (e.target === renameOv) closeIt(); });
+      document.getElementById('rnX').addEventListener('click', closeIt);
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeIt(); });
+      window.addEventListener('hashchange', closeIt);
+      document.getElementById('rnName').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('rnSave').click(); } });
     }
-    var list = document.getElementById('rnList'); list.innerHTML = '';
-    (proj.speakers || []).forEach(function(sp, i){
-      var row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;margin:0 0 8px';
-      var sq = document.createElement('i'); sq.style.cssText = 'flex:0 0 14px;height:14px;background:var(--' + sp.color + ')';
-      var inp = document.createElement('input'); inp.type = 'text'; inp.value = sp.name; inp.maxLength = 30; inp.dataset.old = sp.name;
-      inp.style.cssText = 'flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px;color:var(--ink);background:var(--row);border:1px solid var(--line);border-radius:6px';
-      inp.setAttribute('aria-label', 'Nombre del hablante ' + (i + 1));
-      inp.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('rnSave').click(); } });
-      row.appendChild(sq); row.appendChild(inp); list.appendChild(row);
+    var inp = document.getElementById('rnName'), cols = document.getElementById('rnCols'), oldName = sp.name;
+    inp.value = sp.name; rnColor = sp.color; cols.innerHTML = '';
+    ['sp-1', 'sp-2', 'sp-3', 'sp-4', 'sp-5', 'sp-6'].forEach(function(c){
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Color ' + c.replace('sp-', ''));
+      b.style.cssText = 'width:40px;height:40px;border-radius:50%;cursor:pointer;background:var(--' + c + ');border:3px solid transparent';
+      function mark(){ b.style.borderColor = rnColor === c ? 'var(--ink)' : 'transparent'; b.style.boxShadow = rnColor === c ? '0 0 0 2px var(--bg)' : 'none'; }
+      mark();
+      b.addEventListener('click', function(){ rnColor = c; Array.prototype.forEach.call(cols.children, function(x){ x.style.borderColor = 'transparent'; x.style.boxShadow = 'none'; }); mark(); });
+      cols.appendChild(b);
     });
     document.getElementById('rnSave').onclick = function(){
-      var map = {}, changed = false;
-      Array.prototype.forEach.call(list.querySelectorAll('input'), function(inp){
-        var nv = inp.value.trim().slice(0, 30), old = inp.dataset.old;
-        if (nv && nv !== old){ map[old] = nv; changed = true; }
-      });
+      var nv = inp.value.trim().slice(0, 30) || oldName, nc = rnColor || sp.color;
       renameOv.classList.remove('open');
-      if (!changed) return;
-      (proj.speakers || []).forEach(function(sp){ if (map[sp.name]) sp.name = map[sp.name]; });
-      proj.items.forEach(function(it){ if (it.type === 'dialogo' && map[it.speaker]) it.speaker = map[it.speaker]; });
+      if (nv === oldName && nc === sp.color) return;
+      proj.items.forEach(function(it){ if (it.type === 'dialogo' && it.speaker === oldName){ it.speaker = nv; it.color = nc; } });
+      sp.name = nv; sp.color = nc;
       saveProjects();
       render();
     };
     renameOv.classList.add('open');
-    var f = list.querySelector('input'); if (f) setTimeout(function(){ try{ f.focus(); f.select(); }catch(e){} }, 80);
+    setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 80);
   }
 
   function renderDetail(proj, entering){
@@ -1744,7 +1741,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       li.dataset.type = it.type; li.dataset.id = it.id; if (it.id === lastToggled) li.classList.add('pop');
       var barColor = (it.type === 'dialogo' && it.color) ? it.color : (it.section ? it.scolor : '');
       if (barColor){ li.style.setProperty('--bar', 'var(--' + barColor + ')'); li.classList.add('tint'); }
-      if (it.type === 'dialogo' && it.color){ li.dataset.sp = String(it.color).replace('sp-', ''); }
+      if (it.type === 'dialogo' && it.color){ var spi = 0; (proj.speakers || []).forEach(function(x, k){ if (x.name === it.speaker) spi = k; }); li.dataset.sp = String(spi % 6 + 1); li.dataset.spc = String(it.color).replace('sp-', ''); }
 
       var n = document.createElement('span'); n.className = 'n mono'; n.textContent = String(it.order).padStart(2,'0');
       var body = document.createElement('div'); body.className = 'body';
@@ -1808,13 +1805,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     (proj.speakers || []).forEach(function(sp){
       var s = document.createElement('span'); var sq = document.createElement('i');
       sq.style.setProperty('--c', 'var(--' + sp.color + ')');
-      s.appendChild(sq); s.appendChild(document.createTextNode(sp.name)); els.legend.appendChild(s);
+      s.appendChild(sq); s.appendChild(document.createTextNode(sp.name)); s.title = 'Tocar para cambiar nombre y color'; s.addEventListener('click', function(){ openRename(proj, sp); }); els.legend.appendChild(s);
     });
-    if ((proj.speakers || []).length){
-      var eb = document.createElement('button'); eb.type = 'button'; eb.className = 'legend-edit'; eb.textContent = '✎'; eb.setAttribute('aria-label', 'Cambiar nombres de los hablantes'); eb.title = 'Cambiar nombres';
-      eb.addEventListener('click', function(){ openRename(proj); }); els.legend.appendChild(eb);
-    }
-    els.legend.onclick = function(e){ if (e.target.closest && e.target.closest('span')) openRename(proj); };
     els.jump.hidden = !nextId;
 
     if (entering){
@@ -2876,7 +2868,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       var w = li.querySelector('.who'), name = w ? (w.textContent || '').trim() : '';
       if (name){
         var s = document.createElement('span'); s.className = 'tp-who'; s.textContent = name;
-        var sp = parseInt(li.dataset.sp || '0', 10); if (sp) s.style.color = COLORS[(sp - 1) % 6];
+        var sp = parseInt(li.dataset.spc || li.dataset.sp || '0', 10); if (sp) s.style.color = COLORS[(sp - 1) % 6];
         p.appendChild(s);
       }
       p.appendChild(document.createTextNode(text)); col.appendChild(p);
