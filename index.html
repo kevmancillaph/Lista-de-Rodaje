@@ -1270,6 +1270,13 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     <div class="btn-row"><button class="btn" id="keySave">Guardar clave</button></div>
     <div class="err" id="keyErr"></div>
 
+    <h3>Usar en otros dispositivos</h3>
+    <p>Guarda tus proyectos y tachados en tu repositorio, cifrados con tu clave. Así los ves iguales en otro celular o en la PC. También da links cortos para compartir. Hace falta un token de GitHub de un solo repositorio (ver LEEME).</p>
+    <input type="password" id="ghInput" placeholder="Token de GitHub (github_pat_…)" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="btn-row"><button class="btn" id="ghSave">Guardar token</button><button class="btn" id="ghOff">Quitar token</button></div>
+    <div class="err" id="ghErr"></div>
+    <div class="err" id="ghStatus"></div>
+
     <h3>Papelera</h3>
     <div id="trashList"></div>
 
@@ -1324,7 +1331,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var p = readJson(STORE_KEY, []);
     return Array.isArray(p) ? p : [];
   }
-  function saveProjects(){ writeJson(STORE_KEY, projects); }
+  function saveProjects(){ writeJson(STORE_KEY, projects); scheduleCloud(); }
 
   var projects = loadProjects();
   var settings = Object.assign({estilo:"clasico", pal:"catppuccin", modo:"auto", scale:1, wake:true, filter:"all"}, readJson(SET_KEY, {}));
@@ -1638,7 +1645,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       })
     };
     var base = location.origin + location.pathname.replace(/index\.html$/, '');
-    var link = base + '?i=' + await encodePayload(data);
+    var link = await shortLink(data);
+    if (!link) link = base + '?i=' + await encodePayload(data);
     if (mode === 'qr'){
       if (window.__showQR && window.__showQR(link, proj.title)) return;
       toast('Este guion es muy largo para un QR. Se envía como link.', null, null, 4500);
@@ -1814,6 +1822,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
   function hardDelete(id){
     projects = projects.filter(function(p){ return p.id !== id; });
+    var tb = readJson('rodaje.tomb.v1', {}); tb[id] = Date.now(); writeJson('rodaje.tomb.v1', tb);
     saveProjects(); renderTrash();
   }
 
@@ -1961,7 +1970,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var s = sheetFromHash();
     ['settingsOverlay','importOverlay'].forEach(function(id){ $(id).classList.toggle('open', id === s); });
     if (s === 'settingsOverlay'){
-      renderThemes(); renderSizes(); renderTrash(); renderSyncDetail();
+      renderThemes(); renderSizes(); renderTrash(); renderSyncDetail(); renderCloud();
       $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
     } else if (s === 'importOverlay'){
       $('importErr').textContent = ''; $('importText').value = ''; $('importPrev').textContent = '';
@@ -2277,6 +2286,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
         if (added) toast(added === 1 ? 'Proyecto nuevo cargado' : (added + ' proyectos nuevos cargados'), null, null, 4000);
       }
       render();
+      cloudSync(false);
     }catch(e){
       setSync(navigator.onLine ? 'error' : 'offline');
     }finally{ syncing = false; }
@@ -2288,6 +2298,162 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     if (!/^[A-Za-z0-9_-]{40,50}$/.test(v)){ $('keyErr').textContent = 'Esa clave no tiene el formato correcto.'; return; }
     setKey(v); $('keyErr').textContent = ''; $('keyInput').value = ''; renderSyncDetail(); sync(true);
   });
+
+  /* ---------- sincronización entre dispositivos (token de GitHub de un solo repo) ---------- */
+  var TOKEN_KEY = 'rodaje.gh.v1', META_KEY = 'rodaje.cloud.v1', TOMB_KEY = 'rodaje.tomb.v1';
+  var cloudBusy = false, cloudTimer = 0, cloudInfo = {state:'idle', at: readJson('rodaje.cloudat.v1', 0), msg:''};
+  function getToken(){ try{ return localStorage.getItem(TOKEN_KEY) || ''; }catch(e){ return ''; } }
+  function repoInfo(){
+    var m = /^([^.]+)\.github\.io$/.exec(location.hostname); if (!m) return null;
+    var seg = (location.pathname.split('/').filter(Boolean)[0] || '').replace(/\.html$/, '');
+    return {owner:m[1], repo: seg || (m[1] + '.github.io')};
+  }
+  function textToB64(t){ var b = new TextEncoder().encode(t), s = '', i; for (i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+  function b64ToText(b){ var s = atob(String(b).replace(/\s/g, '')), a = new Uint8Array(s.length), i; for (i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return new TextDecoder().decode(a); }
+  function apiUrl(path, withRef){
+    var ri = repoInfo(); if (!ri) throw new Error('norepo');
+    return 'https://api.github.com/repos/' + ri.owner + '/' + ri.repo + '/contents/' + path + (withRef ? '?ref=main&t=' + Date.now() : '');
+  }
+  async function ghGetFile(path, tok){
+    var h = {Accept:'application/vnd.github+json'}; if (tok) h.Authorization = 'Bearer ' + tok;
+    var r = await fetch(apiUrl(path, true), {headers:h, cache:'no-store'});
+    if (r.status === 404) return null;
+    if (!r.ok){ var e = new Error('http ' + r.status); e.status = r.status; throw e; }
+    var j = await r.json();
+    if (j.content) return {sha:j.sha, text:b64ToText(j.content)};
+    var h2 = {Accept:'application/vnd.github.raw+json'}; if (tok) h2.Authorization = 'Bearer ' + tok;
+    var r2 = await fetch(apiUrl(path, true), {headers:h2, cache:'no-store'});
+    if (!r2.ok){ var e2 = new Error('http ' + r2.status); e2.status = r2.status; throw e2; }
+    return {sha:j.sha, text:await r2.text()};
+  }
+  function ghPutFile(path, text, sha, msg, tok){
+    var body = {message:msg, content:textToB64(text), branch:'main'}; if (sha) body.sha = sha;
+    return fetch(apiUrl(path, false), {method:'PUT', headers:{Accept:'application/vnd.github+json', Authorization:'Bearer ' + tok, 'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  }
+  async function encryptJson(obj, keyStr){
+    var key = await crypto.subtle.importKey('raw', b64urlToBytes(keyStr), 'AES-GCM', false, ['encrypt']);
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = await crypto.subtle.encrypt({name:'AES-GCM', iv:iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+    return {iv:bytesToB64url(iv), ct:bytesToB64url(new Uint8Array(ct))};
+  }
+  function phash(p){ var s = JSON.stringify(p, function(k, v){ return k === 'updatedAt' ? undefined : v; }), h = 5381, i; for (i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return h + ':' + s.length; }
+  function scheduleCloud(){
+    if (!getToken() || !getKey()) return;
+    clearTimeout(cloudTimer); cloudTimer = setTimeout(function(){ cloudSync(false); }, 4000);
+  }
+  function renderCloud(){
+    var el = $('ghStatus'); if (!el) return;
+    var s = cloudInfo.state, t = '';
+    if (!getToken()) t = 'Sin token. Esta app guarda todo solo en este celular.';
+    else if (s === 'working') t = 'Sincronizando…';
+    else if (s === 'offline') t = 'Sin conexión. Se sincroniza al volver.';
+    else if (s === 'error') t = cloudInfo.msg || 'No se pudo sincronizar.';
+    else t = cloudInfo.at ? 'Al día · ' + ago(cloudInfo.at) : 'Token guardado. Falta la primera sincronización.';
+    el.textContent = t; el.className = 'err' + (s === 'error' ? ' warn' : '');
+  }
+  function cloudError(e){
+    var st = e && e.status;
+    if (st === 401) return 'El token no es válido o venció.';
+    if (st === 403) return 'El token no tiene permiso de escritura en este repositorio.';
+    if (st === 404) return 'No encuentro el repositorio con ese token.';
+    if (e && e.message === 'norepo') return 'Esta función solo sirve en la app publicada en GitHub Pages.';
+    return 'No se pudo sincronizar. Los datos siguen guardados aquí.';
+  }
+  async function cloudSync(manual){
+    var tok = getToken(), key = getKey();
+    if (!tok || !key || cloudBusy) return;
+    if (!navigator.onLine){ cloudInfo.state = 'offline'; renderCloud(); return; }
+    cloudBusy = true; cloudInfo.state = 'working'; renderCloud();
+    try{
+      for (var attempt = 0; attempt < 3; attempt++){
+        var got = await ghGetFile('usuario/estado.json', tok);
+        var cloud = {projects:[], tomb:{}};
+        if (got){ cloud = await decryptFile(JSON.parse(got.text), key); cloud.projects = cloud.projects || []; cloud.tomb = cloud.tomb || {}; }
+        var cmap = {}; cloud.projects.forEach(function(p){ cmap[p.id] = p; });
+        var meta = readJson(META_KEY, {}), tomb = readJson(TOMB_KEY, {}), now = Date.now(), replace = {};
+        projects.forEach(function(p){
+          var h = phash(p), m = meta[p.id];
+          if (!m){
+            if (cmap[p.id]){ meta[p.id] = {h:h, at:cmap[p.id].updatedAt || 0}; p.updatedAt = meta[p.id].at; replace[p.id] = true; }
+            else { p.updatedAt = now; meta[p.id] = {h:h, at:now}; }
+          } else if (m.h !== h){ p.updatedAt = now; m.h = h; m.at = now; }
+          else p.updatedAt = p.updatedAt || m.at;
+        });
+        var all = {};
+        projects.forEach(function(p){ all[p.id] = {l:p}; });
+        cloud.projects.forEach(function(p){ (all[p.id] = all[p.id] || {}).c = p; });
+        var expired = now - TRASH_DAYS * 86400000, merged = [], ntomb = {};
+        Object.keys(cloud.tomb).forEach(function(id){ ntomb[id] = cloud.tomb[id]; });
+        Object.keys(tomb).forEach(function(id){ ntomb[id] = Math.max(ntomb[id] || 0, tomb[id]); });
+        Object.keys(all).forEach(function(id){
+          var l = all[id].l, c = all[id].c, t = ntomb[id] || 0;
+          var lu = l ? (l.updatedAt || 0) : -1, cu = c ? (c.updatedAt || 0) : -1;
+          if (t && t >= Math.max(lu, cu)) return;
+          var pick = (l && c) ? ((replace[id] || cu > lu) ? c : l) : (l || c);
+          if (pick.deletedAt && new Date(pick.deletedAt).getTime() < expired) return;
+          merged.push(pick);
+        });
+        Object.keys(ntomb).forEach(function(id){ if (ntomb[id] < now - 60 * 86400000) delete ntomb[id]; });
+        merged.sort(function(a, b){ return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+        var cc = cloud.projects.slice().sort(function(a, b){ return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+        var same = JSON.stringify(merged) === JSON.stringify(cc) && Object.keys(ntomb).length === Object.keys(cloud.tomb).length;
+        var localChanged = merged.length !== projects.length || merged.some(function(p){ return projects.indexOf(p) < 0; });
+        if (!same){
+          var enc = await encryptJson({v:1, at:now, projects:merged, tomb:ntomb}, key);
+          var res = await ghPutFile('usuario/estado.json', JSON.stringify(enc), got ? got.sha : null, 'sync', tok);
+          if (res.status === 409 || res.status === 422){ continue; }
+          if (!res.ok){ var er = new Error('http ' + res.status); er.status = res.status; throw er; }
+        }
+        projects = merged;
+        var nm = {}; projects.forEach(function(p){ nm[p.id] = {h:phash(p), at:p.updatedAt || 0}; });
+        writeJson(META_KEY, nm); writeJson(TOMB_KEY, ntomb);
+        writeJson(STORE_KEY, projects);
+        cloudInfo.state = 'ok'; cloudInfo.at = Date.now(); writeJson('rodaje.cloudat.v1', cloudInfo.at);
+        if (localChanged) render();
+        break;
+      }
+    }catch(e){
+      cloudInfo.state = navigator.onLine ? 'error' : 'offline'; cloudInfo.msg = cloudError(e);
+    }finally{ cloudBusy = false; renderCloud(); }
+  }
+  $('ghSave').addEventListener('click', function(){
+    var v = $('ghInput').value.trim();
+    if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(v)){ $('ghErr').textContent = 'Ese token no tiene el formato correcto.'; return; }
+    if (!getKey()){ $('ghErr').textContent = 'Primero activa la clave de arriba.'; return; }
+    try{ localStorage.setItem(TOKEN_KEY, v); }catch(e){}
+    $('ghErr').textContent = ''; $('ghInput').value = ''; renderCloud(); cloudSync(true);
+  });
+  $('ghOff').addEventListener('click', function(){
+    try{ localStorage.removeItem(TOKEN_KEY); }catch(e){}
+    cloudInfo.state = 'idle'; renderCloud();
+  });
+  async function shortLink(data){
+    var tok = getToken(); if (!tok || !repoInfo() || !navigator.onLine) return null;
+    var ks = bytesToB64url(crypto.getRandomValues(new Uint8Array(32)));
+    var id = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(8)), function(b){ return 'abcdefghijklmnopqrstuvwxyz234567'.charAt(b % 32); }).join('');
+    try{
+      var enc = await encryptJson(data, ks);
+      var r = await ghPutFile('compartidos/' + id + '.json', JSON.stringify(enc), null, 'compartir', tok);
+      if (!r.ok) return null;
+    }catch(e){ return null; }
+    return location.origin + location.pathname.replace(/index\.html$/, '') + '#c=' + id + '.' + ks;
+  }
+  async function importShort(m){
+    history.replaceState(null, '', location.pathname + location.search);
+    for (var i = 0; i < 4; i++){
+      try{
+        var f = await ghGetFile('compartidos/' + m[1] + '.json', '');
+        if (f){
+          var data = await decryptFile(JSON.parse(f.text), m[2]);
+          var proj = buildProject(data);
+          if (proj){ proj.shared = true; projects.push(proj); saveProjects(); go(proj.id); return true; }
+        }
+      }catch(e){}
+      await new Promise(function(ok){ setTimeout(ok, 1500); });
+    }
+    toast('No se pudo abrir el proyecto compartido.', null, null, 5000);
+    return false;
+  }
 
   // activar la clave con un link: …/#k=CLAVE (el fragmento no se envía al servidor)
   function keyFromHash(){
@@ -2329,7 +2495,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   /* ---------- arranque ---------- */
   var keyJustSet = keyFromHash();
   if (sheetFromHash()) history.replaceState(null, '', location.pathname + location.search + '#/');
-  importFromUrl().then(function(imported){
+  var shortM = /^#c=([a-z2-7]{8})\.([A-Za-z0-9_-]{40,50})$/.exec(location.hash);
+  (shortM ? importShort(shortM) : importFromUrl()).then(function(imported){
     if (imported) currentId = idFromHash();
     render(true);
     if (keyJustSet) toast('Clave activada', null, null, 3500);
