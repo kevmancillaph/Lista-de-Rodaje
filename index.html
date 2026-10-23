@@ -337,6 +337,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
   :root[data-modo="dark"] [data-ptype="beerstation"]{ --accent:#FFB020; --accent-ink:#1A1000; }
 
+  /* color propio de cada tipo: --tc para rellenos y marcas, --tx para texto chico */
+  [data-ptype]{--tc:#2A9D8F; --tx:#1F7A70;}
+  [data-ptype="boda"]{--tc:#C9A24B; --tx:#8A6414; --accent:#8A6414; --accent-ink:#FFFFFF;}
+  [data-ptype="beerstation"]{--tc:#F07C12; --tx:#B35200; --accent:#B35200; --accent-ink:#FFFFFF;}
+  [data-ptype="smartclientes"]{--tc:#2B7BE4; --tx:#1A5FBF; --accent:#1A5FBF; --accent-ink:#FFFFFF; --f-head:"Space Grotesk",Inter,system-ui,sans-serif; --f-body:Inter,system-ui,sans-serif; --h-tt:none; --h-ls:-.01em; --h-fw:700; --h-size:1.45rem; --t-fw:600; --t-size:1.1rem; --b-size:1.06rem;}
+  :root[data-modo="dark"] [data-ptype]{--tc:#3CC4B4; --tx:#5FD6C8;}
+  :root[data-modo="dark"] [data-ptype="boda"]{--tc:#E8C468; --tx:#EBCB7A; --accent:#E8C468; --accent-ink:#231A00;}
+  :root[data-modo="dark"] [data-ptype="beerstation"]{--tc:#FF8A2A; --tx:#FF9A3C; --accent:#FF8A2A; --accent-ink:#1A0C00;}
+  :root[data-modo="dark"] [data-ptype="smartclientes"]{--tc:#4B9BFF; --tx:#6AAEFF; --accent:#4B9BFF; --accent-ink:#001A3A;}
+
   /* ---------- base ---------- */
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -1122,6 +1132,17 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   .item[data-sp="5"] .who::before{content:"\2605  ";}
   .item[data-sp="6"] .who::before{content:"\271A  ";}
   .item[data-sp="2"] .body, .item[data-sp="4"] .body, .item[data-sp="6"] .body{margin-left:9%;}
+
+  /* tipo de proyecto: color propio en la etiqueta, los filtros, la lista y el encabezado */
+  .typebtn::before, .chip i{background:var(--tc, var(--accent));}
+  .proj[data-ptype]{border-left-color:var(--tc);}
+  .proj .d .tn{color:var(--tx); font-weight:800;}
+  :root:not([data-estilo="clasico"]):not([data-estilo="plano"]):not([data-estilo="brutal"]) .proj[data-ptype]{position:relative;}
+  :root:not([data-estilo="clasico"]):not([data-estilo="plano"]):not([data-estilo="brutal"]) .proj[data-ptype]::after{content:""; position:absolute; left:6px; top:10px; bottom:10px; width:6px; border-radius:3px; background:var(--tc); pointer-events:none;}
+  :root[data-estilo="brutal"] .proj[data-ptype]{border-left-color:var(--tc);}
+  :root[data-estilo="plano"] .proj[data-ptype]::before{background:var(--tc);}
+  body[data-ptype] header{position:relative;}
+  body[data-ptype] header::before{content:""; position:absolute; left:0; right:0; top:0; height:6px; background:var(--tc); pointer-events:none;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
   :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
@@ -1314,7 +1335,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   var TYPES = [
     {id:'general',    name:'General'},
     {id:'boda',       name:'Bodas'},
-    {id:'beerstation', name:'Beer Station'}
+    {id:'beerstation', name:'Beer Station'},
+    {id:'smartclientes', name:'Smartclientes'}
   ];
   function validType(t){ for (var i=0;i<TYPES.length;i++) if (TYPES[i].id === t) return t; return null; }
   function typeOf(p){ return validType(p && p.type) || 'general'; }
@@ -1322,6 +1344,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   function inferType(title){
     var t = String(title || '');
     if (/beer\s*station|beerstation/i.test(t)) return 'beerstation';
+    if (/smart\s*clientes|smartclientes/i.test(t)) return 'smartclientes';
     if (/\bboda|\bbodas|novi[oa]s?\b|casamiento|matrimonio|\bvals\b/i.test(t)) return 'boda';
     return 'general';
   }
@@ -1528,7 +1551,9 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       var info = document.createElement('div'); info.className = 'info';
       var t = document.createElement('div'); t.className = 't'; t.textContent = p.title;
       var done = p.items.filter(function(i){return i.checked;}).length;
-      var d = document.createElement('div'); d.className = 'd mono'; d.textContent = (typeOf(p) === 'general' ? '' : typeName(typeOf(p)) + ' · ') + fmtDate(p.createdAt) + ' · ' + done + '/' + p.items.length;
+      var d = document.createElement('div'); d.className = 'd mono';
+      if (typeOf(p) !== 'general'){ var tn = document.createElement('b'); tn.className = 'tn'; tn.textContent = typeName(typeOf(p)); d.appendChild(tn); d.appendChild(document.createTextNode(' · ')); }
+      d.appendChild(document.createTextNode(fmtDate(p.createdAt) + ' · ' + done + '/' + p.items.length));
       var tk = document.createElement('div'); tk.className = 'ticks'; fillTicks(tk, p.items);
       info.appendChild(t); info.appendChild(d); info.appendChild(tk);
 

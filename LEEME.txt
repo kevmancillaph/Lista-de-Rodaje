@@ -63,9 +63,11 @@ pierdes de vista, está en Ajustes > Papelera (30 días).
 
 Tipos de proyecto
 -------------------
-Cada proyecto tiene un tipo: Bodas, Beer Station o General. Cada tipo
-tiene su color y su tipografía (las fuentes están guardadas en la app,
-funcionan sin internet). Se puede cambiar tocando la etiqueta del tipo
+Cada proyecto tiene un tipo: Bodas (dorado), Beer Station (naranja),
+Smartclientes (azul) o General (verde azulado). Cada tipo tiene su color
+y su tipografía (las fuentes están guardadas en la app, funcionan sin
+internet). El color se ve en el filtro, en la lista y en la franja de
+arriba del proyecto. Se puede cambiar tocando la etiqueta del tipo
 debajo del título. En el inicio, los botones de arriba filtran por tipo.
 Para agregar otro tipo hay que editar la lista TYPES en index.html y los
 colores/fuentes [data-ptype="..."] en el CSS.
