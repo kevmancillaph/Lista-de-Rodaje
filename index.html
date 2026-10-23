@@ -2589,19 +2589,27 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       ctimer = setTimeout(step, 1000);
     })();
   }
+  var startPos = null;
+  function posOf(el){ return Math.max(0, Math.min(maxScroll(), el.offsetTop - parseInt(col.style.paddingTop || '0', 10))); }
+  function pendingPos(){
+    var kids = col.children;
+    for (var i = 0; i < kids.length; i++){ if (!kids[i].classList.contains('tp-done') && !kids[i].classList.contains('tp-empty')) return posOf(kids[i]); }
+    return 0;
+  }
   function toggle(){
     if (counting){ cancelCount(); label(); return; }
     if (playing){ stop(); return; }
     var m = maxScroll();
-    if (m > 0 && pos >= m - 1){ pos = 0; sc.scrollTop = 0; }
+    if (m > 0 && pos >= m - 1){ pos = startPos !== null ? startPos : pendingPos(); sc.scrollTop = pos; }
+    if (startPos === null) startPos = pos;
     if (st.count > 0) countdown(st.count); else begin();
   }
-  function restart(){ cancelCount(); stop(); pos = 0; sc.scrollTop = 0; label(); }
+  function restart(){ cancelCount(); stop(); startPos = null; pos = pendingPos(); sc.scrollTop = pos; label(); }
 
   function fsOn(){ try{ var f = ov.requestFullscreen || ov.webkitRequestFullscreen; if (f && !(document.fullscreenElement || document.webkitFullscreenElement)){ var r = f.call(ov); if (r && r.catch) r.catch(function(){}); } }catch(e){} }
   function fsOff(){ try{ if (document.fullscreenElement || document.webkitFullscreenElement){ var x = document.exitFullscreen || document.webkitExitFullscreen; var r = x.call(document); if (r && r.catch) r.catch(function(){}); } }catch(e){} }
   function open(){
-    fsOn(); build(); ov.classList.add('open'); layout(); pos = 0; sc.scrollTop = 0; label();
+    startPos = null; fsOn(); build(); ov.classList.add('open'); layout(); pos = 0; sc.scrollTop = 0; label();
     try{ $('tpPlay').focus(); }catch(e){}
   }
   function close(){ cancelCount(); stop(); unwake(); closeJump(); ov.classList.remove('open'); fsOff(); }
@@ -2634,7 +2642,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   function jumpTo(idx){
     var el = col.children[idx]; if (!el) return;
     cancelCount(); stop();
-    pos = Math.max(0, Math.min(maxScroll(), el.offsetTop - parseInt(col.style.paddingTop || '0', 10)));
+    pos = posOf(el); startPos = pos;
     sc.scrollTop = pos; closeJump(); label();
   }
 
