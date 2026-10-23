@@ -106,3 +106,31 @@ Paletas del estilo Clásico (claro y oscuro): Catppuccin, Rosé Pine, Solarized,
 Estilos: Clásico, Guion de cine, Brutalista, Vidrio, Terminal, Cuaderno, Editorial, Plano, Hoja de llamado, Neón retro, Suave, Recibo y Cómic. Cambian tipografía, forma y textura, no solo colores. Fuentes incluidas offline: Courier Prime, Space Grotesk, Inter, JetBrains Mono, Patrick Hand, Caveat y Playfair Display cursiva (licencia OFL, ver fonts/LICENSE-*.txt).
 
 Sonidos: cada estilo tiene los suyos (marcar, desmarcar, abrir/cerrar ajustes, botones, proyecto terminado). Se generan en el aparato, sin archivos. Se apagan en Ajustes > "Sonidos según el estilo".
+
+Usar en otros dispositivos y links cortos (token de GitHub)
+-------------------------------------------------------------
+Sirve para ver tus proyectos y tachados iguales en otro celular o en la PC,
+y para compartir con un link corto. Se hace una vez por dispositivo.
+
+1. En github.com, con tu cuenta: foto de perfil > Settings > (abajo)
+   Developer settings > Personal access tokens > Fine-grained tokens >
+   Generate new token.
+2. Nombre: Lista de rodaje. Expiration: la que quieras (por ejemplo 1 año).
+3. Repository access: "Only select repositories" y elige SOLO Lista-de-Rodaje.
+4. Permissions > Repository permissions > Contents: "Read and write".
+   Deja todo lo demás sin permisos. Generate token y copia el texto
+   (empieza con github_pat_). Se muestra una sola vez.
+5. En la app: Ajustes > "Usar en otros dispositivos" > pega el token > Guardar.
+   La clave debe estar activada antes (la de más arriba en Ajustes).
+
+Qué pasa después: la app guarda en el repo un archivo cifrado con tus
+proyectos y lo que marcaste (usuario/estado.json). Cada dispositivo con la
+misma clave y el token lo baja y sube sus cambios. Gana el cambio más
+reciente de cada proyecto. Borrar un proyecto también se refleja.
+Compartir crea un archivo cifrado aparte (compartidos/) con una clave propia
+que viaja solo dentro del link: el link queda de ~100 caracteres. Quien lo
+abra recibe una copia independiente.
+
+Si el token se pierde o lo quieres cortar: bórralo en GitHub (Settings >
+Developer settings > Personal access tokens). La app sigue funcionando
+sin sincronizar.
