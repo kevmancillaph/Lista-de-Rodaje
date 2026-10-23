@@ -2037,7 +2037,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var EMO = /^[\p{Extended_Pictographic}️‍⃣\s]+/u;
     var ACT_EMO = /^[\u{1F3A5}\u{1F4F9}\u{1F3AC}\u{1F4F8}\u{1F39E}\u{1F3B5}\u{1F3B6}\u{1F3A7}\u{1F50A}\u{1F4CD}\u{1F3AF}⚡\u{1F4F1}\u{1F4A1}\u{1F3A8}]/u;
     var VOX_EMO = /^[\u{1F5E3}\u{1F4AC}\u{1F399}\u{1F3A4}\u{1F4E2}]/u;
-    var ACT = /^(acci[oó]n|a[cç][aã]o|plano|visual|b-?roll|corte|c[aá]mara|texto en pantalla|texto na tela|on screen|m[uú]sica|[aá]udio|audio|sfx|fondo|transici[oó]n|transi[cç][aã]o|toma|tomada|cta|locaci[oó]n|vestuario|cen[aá]rio|escenario|encuadre|ambiente|nota|atenci[oó]n|importante|ojo|tip|ejemplo|observaci[oó]n|observaciones|duraci[oó]n|formato|objetivo|tema|tono|plataforma|descripci[oó]n|caption|hashtags?)\s*[:\-–—]/i;
+    var ACT = /^(acci[oó]n|a[cç][aã]o|plano|visual|b-?roll|b roll|corte|corte a|c[aá]mara|texto en pantalla|texto na tela|texto|on screen|overlay|r[oó]tulo|grafismo|lower third|subt[ií]tulo|t[ií]tulo en pantalla|m[uú]sica|[aá]udio|audio|sonido|sfx|fx|efecto|fondo|transici[oó]n|transi[cç][aã]o|fade in|fade out|fade|cut to|cut|disolvencia|zoom|paneo|panor[aá]mica|travelling|[aá]ngulo|movimiento|toma|tomada|cta|locaci[oó]n|vestuario|cen[aá]rio|escenario|encuadre|ambiente|ext|int|nota|atenci[oó]n|importante|ojo|tip|ejemplo|observaci[oó]n|observaciones|duraci[oó]n|formato|objetivo|tema|tono|plataforma|descripci[oó]n|caption|hashtags?)\s*\d*\s*[:.\-–—]/i;
     var HEAD_NUM = /^(escena|cena|scene|parte|bloque|d[ií]a|acto|secci[oó]n|se[cç][aã]o|toma|clip)\s*\d+/i;
     var HEAD_WORD = /^(hook|gancho|intro|introducci[oó]n|desarrollo|cierre|cta|outro|final|conclusi[oó]n|conclus[aã]o|apertura|abertura|presentaci[oó]n)\s*(\([^)]*\))?\s*[:\-–—]?\s*$/i;
     var HEAD_LBL = /^(hook|gancho|intro|introducci[oó]n|desarrollo|cierre|cta|outro|final|conclusi[oó]n|conclus[aã]o|apertura|abertura|presentaci[oó]n|problema|soluci[oó]n|resultado|antes|despu[eé]s)\s*(\([^)]*\))?\s*[:\-–—]\s*(\S.*)$/i;
@@ -2089,8 +2089,16 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       }
       var h = /^#{1,4}\s*(.+)$/.exec(t);
       if (h){ section = clean(h[1]).slice(0, 60); pending = ''; continue; }
-      if (HEAD_NUM.test(t) && !/^[^:]{0,24}:\s*\S.{40,}/.test(t) || HEAD_WORD.test(t)){
-        section = clean(t.replace(/[:：]\s*$/, '')).slice(0, 60); pending = ''; continue;
+      if (HEAD_NUM.test(t) || HEAD_WORD.test(t)){
+        var hm = /^((?:escena|cena|scene|parte|bloque|d[ií]a|acto|secci[oó]n|se[cç][aã]o|toma|clip)\s*\d+[a-z]?)\s*(?:[:：\-–—.]\s*(.+))?$/i.exec(t);
+        var head = clean(t.replace(/[:：]\s*$/, '')), restHead = '';
+        if (hm && hm[2]){
+          var r2 = clean(hm[2]);
+          if (r2.length > 50 || /[.!?]$/.test(r2) || /^[\(\[]/.test(r2)){ head = hm[1]; restHead = r2; }
+        }
+        section = head.slice(0, 60); pending = '';
+        if (restHead) add({type:/^[“"«]/.test(hm[2]) ? 'dialogo' : 'accion', speaker:'Voz', text:restHead.replace(/^[\(\[]|[\)\]]$/g, '')});
+        continue;
       }
       var m;
       m = /^[\(\[](.+)[\)\]]$/.exec(t) || (/^\*[^*].*[^*]\*$/.test(raw1) ? /^\*(.+)\*$/.exec(raw1) : null);
@@ -2103,21 +2111,21 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
         var name = m[1].replace(/^[\s\W_]+/, '').trim(), note = m[2] ? m[2].replace(/^\(|\)$/g, '').trim() : '', rest = clean(m[3] || '');
         if (name){
           if (note) add({type:'accion', text:note});
-          if (rest){ add({type:'dialogo', speaker:name, text:rest}); pending = name; }
+          if (rest){ add({type:'dialogo', speaker:name, text:rest}); pending = ''; }
           else pending = name;
           continue;
         }
       }
       if (pending){
         var last = items[items.length - 1];
-        if (last && last.type === 'dialogo' && last.speaker === pending && !(/^[“"«]/.test(t) && false)) last.text += ' ' + clean(t);
-        else add({type:'dialogo', speaker:pending, text:clean(t)});
+        add({type:'dialogo', speaker:pending, text:clean(t)});
         continue;
       }
       if (/^[“"«]/.test(t)){ add({type:'dialogo', speaker:'Voz', text:clean(t)}); continue; }
       if (schedule || hasLabels){
         var prev = items[items.length - 1];
-        if (!schedule && prev && prev.type === 'dialogo' && lines[i - 1]){ prev.text += ' ' + clean(t); continue; }
+        var goes = prev && prev.type === 'dialogo' && lines[i - 1] && !/[.!?…”"»:]$/.test(prev.text.trim()) && /^[a-záéíóúñü¿¡,;]/.test(t);
+        if (!schedule && goes){ prev.text += ' ' + clean(t); continue; }
         add({type:'accion', text:clean(t)}); continue;
       }
       add({type:'dialogo', speaker:'Voz', text:clean(t)});
