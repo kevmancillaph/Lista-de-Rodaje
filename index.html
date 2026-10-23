@@ -2770,8 +2770,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var o = [d.title, ''];
     d.rows.forEach(function(r){
       if (r.k === 'sec'){ o.push('', '## ' + r.text); return; }
-      if (r.k === 'acc') o.push('(' + r.text + ')');
-      else o.push((r.who ? r.who + ': ' : 'Voz: ') + r.text);
+      if (r.k === 'acc') o.push('(' + r.text + ')', '');
+      else o.push((r.who ? r.who + ': ' : 'Voz: ') + r.text, '');
     });
     return o.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
   }
