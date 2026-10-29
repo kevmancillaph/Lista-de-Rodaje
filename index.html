@@ -1744,6 +1744,66 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} }, 80);
   }
 
+  /* ---------- eliminar una línea (pulsación larga) ---------- */
+  var delOv = null, delOpenedAt = 0, delTarget = null;
+  function itemPress(li, projId, itemId){
+    var t = null, fired = false, x0 = 0, y0 = 0;
+    function clr(){ if (t){ clearTimeout(t); t = null; } }
+    li.style.webkitTouchCallout = 'none';
+    li.addEventListener('pointerdown', function(e){
+      if (e.button) return;
+      fired = false; x0 = e.clientX; y0 = e.clientY; clr();
+      t = setTimeout(function(){
+        t = null; fired = true;
+        if (navigator.vibrate){ try{ navigator.vibrate(18); }catch(_){} }
+        openDeleteItem(projId, itemId);
+      }, 500);
+    });
+    li.addEventListener('pointermove', function(e){ if (t && (Math.abs(e.clientX - x0) > 10 || Math.abs(e.clientY - y0) > 10)) clr(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function(n){ li.addEventListener(n, clr); });
+    li.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    li.addEventListener('click', function(e){ if (fired){ fired = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+  }
+  function openDeleteItem(projId, itemId){
+    var proj = getById(projId); if (!proj) return;
+    var it = null; proj.items.forEach(function(x){ if (x.id === itemId) it = x; });
+    if (!it) return;
+    if (!delOv){
+      delOv = document.createElement('div'); delOv.className = 'xp'; delOv.setAttribute('role', 'dialog');
+      delOv.innerHTML = '<div class="xp-sheet"><h2>Eliminar línea</h2><p id="delTxt" style="opacity:.85;overflow-wrap:anywhere"></p><button class="xp-b" id="delOk" type="button" style="text-align:center;font-weight:800">Eliminar</button><button class="xp-b" id="delX" type="button" style="text-align:center">Cancelar</button></div>';
+      document.body.appendChild(delOv);
+      var closeIt = function(){ delOv.classList.remove('open'); delTarget = null; };
+      delOv.addEventListener('click', function(e){ if (e.target === delOv && Date.now() - delOpenedAt > 350) closeIt(); });
+      document.getElementById('delX').addEventListener('click', closeIt);
+      document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeIt(); });
+      window.addEventListener('hashchange', closeIt);
+      document.getElementById('delOk').addEventListener('click', function(){
+        var tg = delTarget; closeIt();
+        if (tg) deleteItem(tg.projId, tg.itemId);
+      });
+    }
+    var txt = (it.type === 'dialogo' ? it.speaker + ': ' : 'Acción: ') + it.text;
+    document.getElementById('delTxt').textContent = txt.length > 140 ? txt.slice(0, 137) + '…' : txt;
+    delTarget = {projId: projId, itemId: itemId};
+    delOpenedAt = Date.now();
+    delOv.classList.add('open');
+  }
+  function deleteItem(projId, itemId){
+    var proj = getById(projId); if (!proj) return;
+    var idx = -1; proj.items.forEach(function(x, k){ if (x.id === itemId) idx = k; });
+    if (idx < 0) return;
+    var snap = JSON.parse(JSON.stringify(proj.items));
+    proj.items.splice(idx, 1);
+    proj.items.slice().sort(function(a, b){ return a.order - b.order; }).forEach(function(x, k){ x.order = k + 1; });
+    editingItemId = null;
+    saveProjects();
+    renderDetail(proj);
+    toast('Línea eliminada', 'Deshacer', function(){
+      var cur = getById(projId); if (!cur) return;
+      cur.items = snap; saveProjects(); renderDetail(cur);
+    });
+  }
+
   function renderDetail(proj, entering){
     var top = els.main.scrollTop;
     var total = proj.items.length;
@@ -1811,6 +1871,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       eb.addEventListener('click', function(e){ e.stopPropagation(); editingItemId = it.id; renderDetail(proj); });
 
       li.appendChild(chk); li.appendChild(n); li.appendChild(body); li.appendChild(eb);
+      itemPress(li, proj.id, it.id);
       li.addEventListener('click', function(ev){
         document.body.classList.remove('enter'); lastToggled = it.id;
         try{
