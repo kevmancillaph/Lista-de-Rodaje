@@ -3001,7 +3001,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
   function label(){
     var b = $('tpPlay'), atEnd = maxScroll() > 0 && pos >= maxScroll() - 1;
-    ov.classList.toggle('run', playing || counting || hold);
+    ov.classList.toggle('run', playing || counting);
     b.textContent = counting ? 'Cancelar' : playing ? 'Pausa' : atEnd ? 'Iniciar' : pos > 2 ? 'Seguir' : 'Iniciar';
     $('tpFocus').textContent = 'Enfoque: ' + (focusName() || 'todos'); $('tpFocus').setAttribute('aria-pressed', focusName() ? 'true' : 'false');
     $('tpSizeV').textContent = st.size;
