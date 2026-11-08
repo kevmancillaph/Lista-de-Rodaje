@@ -2912,7 +2912,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 (function(){
   "use strict";
   var KEY = 'rodaje.teleprompter';
-  var st = {size:44, wpm:130, count:3, acts:false, mirror:false};
+  var st = {size:44, wpm:130, count:3, acts:false, mirror:false, lineStop:false};
   try{ var o = JSON.parse(localStorage.getItem(KEY) || '{}'); Object.keys(st).forEach(function(k){ if (o[k] !== undefined && typeof o[k] === typeof st[k]) st[k] = o[k]; }); }catch(e){}
   function save(){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
   var COLORS = ['#6DB3F2','#7FD18B','#F0B94D','#B79CFF','#FF8FB1','#5FD6D0','#FF8A80','#FFB074'];
@@ -2943,7 +2943,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       '<div class="tp-grp"><span class="tp-lbl">Letra</span><button class="tp-b" id="tpSm" type="button" aria-label="Letra más chica">A&minus;</button><span class="tp-val" id="tpSizeV"></span><button class="tp-b" id="tpLg" type="button" aria-label="Letra más grande">A+</button></div>' +
       '<div class="tp-grp"><span class="tp-lbl">Velocidad</span><button class="tp-b" id="tpSlow" type="button" aria-label="Más lento">&minus;</button><span class="tp-val" id="tpWpmV"></span><button class="tp-b" id="tpFast" type="button" aria-label="Más rápido">+</button></div>' +
       '<div class="tp-grp"><button class="tp-b" id="tpCountB" type="button"></button><button class="tp-b" id="tpActs" type="button" aria-pressed="false">Acciones</button><button class="tp-b" id="tpMir" type="button" aria-pressed="false">Espejo</button></div>' +
-      '<div class="tp-grp"><button class="tp-b" id="tpFocus" type="button" aria-pressed="false"></button></div>' +
+      '<div class="tp-grp"><button class="tp-b" id="tpFocus" type="button" aria-pressed="false"></button><button class="tp-b" id="tpLineStop" type="button" aria-pressed="false">Pausa por línea</button></div>' +
       '</div>' +
     '</div>';
   document.body.appendChild(ov);
@@ -2982,7 +2982,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     calcStops();
   }
   function calcStops(){
-    stops = []; if (!focusName()) return;
+    stops = []; if (!focusName() && !st.lineStop) return;
     var pad = parseInt(col.style.paddingTop || '0', 10), mx = maxScroll();
     Array.prototype.forEach.call(col.children, function(el){
       var c = el.classList; if (c.contains('tp-dim') || c.contains('tp-done') || c.contains('tp-act') || c.contains('tp-empty')) return;
@@ -3008,6 +3008,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     $('tpWpmV').textContent = st.wpm;
     $('tpCountB').textContent = st.count ? 'Conteo ' + st.count + ' s' : 'Sin conteo';
     $('tpActs').setAttribute('aria-pressed', st.acts ? 'true' : 'false');
+    $('tpLineStop').setAttribute('aria-pressed', st.lineStop ? 'true' : 'false');
     $('tpMir').setAttribute('aria-pressed', st.mirror ? 'true' : 'false'); sc.classList.toggle('mirror', st.mirror);
   }
 
@@ -3147,6 +3148,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   $('tpSlow').addEventListener('click', function(){ wpm(-10); });
   $('tpFast').addEventListener('click', function(){ wpm(10); });
   $('tpCountB').addEventListener('click', function(){ st.count = st.count === 3 ? 5 : st.count === 5 ? 0 : 3; save(); label(); });
+  $('tpLineStop').addEventListener('click', function(){ st.lineStop = !st.lineStop; save(); calcStops(); label(); });
   $('tpMir').addEventListener('click', function(){ st.mirror = !st.mirror; save(); label(); });
   $('tpFocus').addEventListener('click', function(){
     var seen = []; Array.prototype.forEach.call(items.querySelectorAll('li.item[data-type="dialogo"] .who'), function(w){ var n = (w.textContent || '').trim(); if (n && seen.indexOf(n) < 0) seen.push(n); });
