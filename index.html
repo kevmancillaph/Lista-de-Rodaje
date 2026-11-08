@@ -1155,6 +1155,15 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   :root[data-estilo="plano"] .proj[data-ptype]::before{background:var(--tc);}
   body[data-ptype] header{position:relative;}
   body[data-ptype] header::before{content:""; position:absolute; left:0; right:0; top:0; height:6px; background:var(--tc); pointer-events:none;}
+
+  /* progreso con el color del tema + tinte de tarjeta */
+  .proj[data-ptype] .ticks i.on, body[data-ptype] header .ticks i.on{background:var(--tc) !important; border-color:var(--tc) !important;}
+  .proj[data-ptype] .ticks.solid i, body[data-ptype] header .ticks.solid i{background:var(--tc) !important;}
+  :root[data-estilo] .proj[data-ptype]{background-image:linear-gradient(color-mix(in srgb, var(--tc) 15%, transparent), color-mix(in srgb, var(--tc) 15%, transparent)); border-top-color:color-mix(in srgb, var(--tc) 55%, var(--line)); border-right-color:color-mix(in srgb, var(--tc) 55%, var(--line)); border-bottom-color:color-mix(in srgb, var(--tc) 55%, var(--line));}
+  /* numeración opcional + añadir línea */
+  :root[data-nums="off"] .item .n{display:none !important;}
+  .addline{list-style:none; display:flex; justify-content:center; padding:16px var(--gr) 26px var(--gl);}
+  .addline .btn{width:100%; max-width:420px; border-style:dashed;}
   /* el número de toma va en la esquina, sin ocupar una columna */
   :root[data-estilo] .item{position:relative;}
   :root[data-estilo] .item .n{position:absolute; right:10px; bottom:3px; width:auto; min-width:0; margin:0; padding:0; border:0; display:block; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.62rem; font-weight:600; line-height:1; text-align:right; opacity:.62; pointer-events:none;}
@@ -1289,6 +1298,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
     <h3>Pantalla</h3>
     <div class="line"><span>Mantener encendida al marcar tomas</span><input type="checkbox" class="switch" id="wakeSwitch" aria-label="Mantener pantalla encendida"></div>
+    <div class="line"><label for="numSwitch">Numerar las líneas</label><input type="checkbox" class="switch" id="numSwitch" aria-label="Numerar líneas"></div>
     <div class="line"><label for="sndSwitch">Sonidos según el estilo</label><input type="checkbox" class="switch" id="sndSwitch" aria-label="Sonidos"></div>
 
     <h3>Sincronización</h3>
@@ -1367,7 +1377,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   function saveProjects(){ writeJson(STORE_KEY, projects); scheduleCloud(); }
 
   var projects = loadProjects();
-  var settings = Object.assign({estilo:"clasico", pal:"catppuccin", modo:"auto", scale:1, wake:true, filter:"all", dest:true, dint:50, hc:false, hcs:null}, readJson(SET_KEY, {}));
+  var settings = Object.assign({estilo:"clasico", pal:"catppuccin", modo:"auto", scale:1, wake:true, filter:"all", dest:true, dint:50, hc:false, hcs:null, nums:true}, readJson(SET_KEY, {}));
   function saveSettings(){ writeJson(SET_KEY, settings); }
 
   // la papelera se vacía sola a los 30 días
@@ -1438,6 +1448,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     rootEl.setAttribute('data-estilo', settings.estilo);
     rootEl.setAttribute('data-paleta', palKey(settings.estilo));
     rootEl.setAttribute('data-modo', m);
+    rootEl.setAttribute('data-nums', settings.nums === false ? 'off' : 'on');
     var meta = document.getElementById('metaTheme');
     if (meta){ var bg = getComputedStyle(rootEl).getPropertyValue('--bg').trim(); meta.setAttribute('content', bg || '#EFF1F5'); }
     applyDest();
@@ -1813,13 +1824,21 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     if (!it) return;
     if (!delOv){
       delOv = document.createElement('div'); delOv.className = 'xp'; delOv.setAttribute('role', 'dialog');
-      delOv.innerHTML = '<div class="xp-sheet"><h2>Eliminar línea</h2><p id="delTxt" style="opacity:.85;overflow-wrap:anywhere"></p><button class="xp-b" id="delOk" type="button" style="text-align:center;font-weight:800">Eliminar</button><button class="xp-b" id="delX" type="button" style="text-align:center">Cancelar</button></div>';
+      delOv.innerHTML = '<div class="xp-sheet"><h2>Línea</h2><p id="delTxt" style="opacity:.85;overflow-wrap:anywhere"></p><button class="xp-b" id="insUp" type="button" style="text-align:center">Insertar línea arriba</button><button class="xp-b" id="insDn" type="button" style="text-align:center">Insertar línea abajo</button><button class="xp-b" id="delOk" type="button" style="text-align:center;font-weight:800">Eliminar</button><button class="xp-b" id="delX" type="button" style="text-align:center">Cancelar</button></div>';
       document.body.appendChild(delOv);
       var closeIt = function(){ delOv.classList.remove('open'); delTarget = null; };
       delOv.addEventListener('click', function(e){ if (e.target === delOv && Date.now() - delOpenedAt > 350) closeIt(); });
       document.getElementById('delX').addEventListener('click', closeIt);
       document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeIt(); });
       window.addEventListener('hashchange', closeIt);
+      function insFrom(off){
+        var tg = delTarget; closeIt(); if (!tg) return;
+        var pr = getById(tg.projId); if (!pr) return;
+        var idx = -1; pr.items.slice().sort(byOrder).forEach(function(x, k){ if (x.id === tg.itemId) idx = k; });
+        if (idx >= 0) insertItem(tg.projId, idx + off);
+      }
+      document.getElementById('insUp').addEventListener('click', function(){ insFrom(0); });
+      document.getElementById('insDn').addEventListener('click', function(){ insFrom(1); });
       document.getElementById('delOk').addEventListener('click', function(){
         var tg = delTarget; closeIt();
         if (tg) deleteItem(tg.projId, tg.itemId);
@@ -1830,6 +1849,26 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     delTarget = {projId: projId, itemId: itemId};
     delOpenedAt = Date.now();
     delOv.classList.add('open');
+  }
+  // línea nueva en edición: vive aparte y solo entra a los datos al guardar con texto
+  var pendingNew = null;
+  function byOrder(a, b){ return a.order - b.order; }
+  function insertItem(projId, pos){
+    var proj = getById(projId); if (!proj) return;
+    var sorted = proj.items.slice().sort(byOrder);
+    var nb = sorted[pos - 1] || sorted[pos] || null;
+    var it = {id: 'i' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7), order: pos + 1, type: 'accion', speaker: '', color: '', text: '', checked: false, section: nb && nb.section ? nb.section : '', scolor: nb && nb.section ? (nb.scolor || '') : ''};
+    pendingNew = {projId: projId, pos: pos, item: it};
+    editingItemId = it.id;
+    renderDetail(proj);
+    setTimeout(function(){ var a = document.getElementById('edit-' + it.id); if (a) a.scrollIntoView({block: 'center', behavior: 'smooth'}); }, 80);
+  }
+  function commitPending(proj, text){
+    var it = pendingNew.item, pos = pendingNew.pos; pendingNew = null;
+    it.text = text;
+    var sorted = proj.items.slice().sort(byOrder);
+    sorted.splice(pos, 0, it); sorted.forEach(function(x, k){ x.order = k + 1; });
+    proj.items.push(it);
   }
   function deleteItem(projId, itemId){
     var proj = getById(projId); if (!proj) return;
@@ -1859,7 +1898,10 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var nextId = nextItemId(proj);
     els.items.innerHTML = '';
     var lastSec = null, sched = isSchedule(proj);
-    proj.items.slice().sort(function(a,b){return a.order-b.order;}).forEach(function(it){
+    var rows = proj.items.slice().sort(function(a,b){return a.order-b.order;});
+    if (pendingNew && (pendingNew.projId !== proj.id || editingItemId !== pendingNew.item.id)) pendingNew = null;
+    if (pendingNew) rows.splice(Math.min(pendingNew.pos, rows.length), 0, pendingNew.item);
+    rows.forEach(function(it){
       if (it.section && it.section !== lastSec){
         var inSec = proj.items.filter(function(x){ return x.section === it.section; });
         var band = document.createElement('li'); band.className = 'band'; band.dataset.section = it.section;
@@ -1878,7 +1920,8 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       if (barColor){ li.style.setProperty('--bar', 'var(--' + barColor + ')'); li.classList.add('tint'); }
       if (it.type === 'dialogo' && it.color){ var spi = 0; (proj.speakers || []).forEach(function(x, k){ if (x.name === it.speaker) spi = k; }); li.dataset.sp = String(spi % 8 + 1); li.dataset.spc = String(it.color).replace('sp-', ''); li.style.setProperty('--ton', 'var(--ton-' + li.dataset.spc + ')'); }
 
-      var n = document.createElement('span'); n.className = 'n mono'; n.textContent = String(it.order).padStart(2,'0');
+      var isNew = !!(pendingNew && pendingNew.item === it);
+      var n = document.createElement('span'); n.className = 'n mono'; n.textContent = isNew ? '' : String(it.order).padStart(2,'0');
       var body = document.createElement('div'); body.className = 'body';
       var who = document.createElement('div'); who.className = 'who';
       var ti = (sched && it.type === 'accion') ? splitTime(it.text) : null;
@@ -1888,7 +1931,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       else who.textContent = 'Acción';
 
       if (editingItemId === it.id){
-        var area = document.createElement('textarea'); area.className = 'edit-area'; area.value = it.text;
+        var area = document.createElement('textarea'); area.className = 'edit-area'; area.value = it.text; area.id = 'edit-' + it.id; if (isNew) area.placeholder = 'Nueva línea…';
         var row = document.createElement('div'); row.className = 'btn-row';
         var save = document.createElement('button'); save.className = 'btn primary small'; save.textContent = 'Guardar';
         var cancel = document.createElement('button'); cancel.className = 'btn small'; cancel.textContent = 'Cancelar';
@@ -1897,10 +1940,12 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
         li.appendChild(n); li.appendChild(body);
         li.addEventListener('click', function(e){ e.stopPropagation(); });
         save.addEventListener('click', function(e){
-          e.stopPropagation(); var v = area.value.trim(); if (v) it.text = v;
+          e.stopPropagation(); var v = area.value.trim();
+          if (isNew){ if (v) commitPending(proj, v); else pendingNew = null; }
+          else if (v) it.text = v;
           editingItemId = null; saveProjects(); renderDetail(proj);
         });
-        cancel.addEventListener('click', function(e){ e.stopPropagation(); editingItemId = null; renderDetail(proj); });
+        cancel.addEventListener('click', function(e){ e.stopPropagation(); if (isNew) pendingNew = null; editingItemId = null; renderDetail(proj); });
         els.items.appendChild(li);
         setTimeout(function(){ area.focus(); area.setSelectionRange(area.value.length, area.value.length); }, 0);
         return;
@@ -1936,6 +1981,11 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       });
       els.items.appendChild(li);
     });
+
+    var addLi = document.createElement('li'); addLi.className = 'addline';
+    var addB = document.createElement('button'); addB.type = 'button'; addB.className = 'btn'; addB.textContent = '+ Añadir línea';
+    addB.addEventListener('click', function(){ insertItem(proj.id, proj.items.length); });
+    addLi.appendChild(addB); els.items.appendChild(addLi);
 
     els.legend.innerHTML = ''; els.legend.classList.toggle('f', !!focusSp);
     (proj.speakers || []).forEach(function(sp){
@@ -2162,6 +2212,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   $('dintRange').addEventListener('input', function(){ settings.dint = parseInt(this.value, 10); $('dintVal').textContent = settings.dint + '%'; saveSettings(); applyDest(); });
   $('hcSwitch').addEventListener('change', function(){ settings.hc = this.checked; saveSettings(); applyDest(); renderDest(); });
   $('destReset').addEventListener('click', function(){ settings.dest = true; settings.dint = 50; settings.hc = false; settings.hcs = null; saveSettings(); applyDest(); renderDest(); });
+  $('numSwitch').addEventListener('change', function(){ settings.nums = this.checked; saveSettings(); applyTheme(); });
   $('wakeSwitch').addEventListener('change', function(){ settings.wake = this.checked; saveSettings(); if (settings.wake) wake(); else unwake(); });
 
   /* Las hojas (Ajustes, Pegar proyecto) son rutas del historial (#/ajustes, #/nuevo):
@@ -2174,7 +2225,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     ['settingsOverlay','importOverlay'].forEach(function(id){ $(id).classList.toggle('open', id === s); });
     if (s === 'settingsOverlay'){
       renderThemes(); renderSizes(); renderDest(); renderTrash(); renderSyncDetail(); renderCloud();
-      $('wakeSwitch').checked = !!settings.wake; $('keyErr').textContent = ''; $('keyInput').value = '';
+      $('wakeSwitch').checked = !!settings.wake; $('numSwitch').checked = settings.nums !== false; $('keyErr').textContent = ''; $('keyInput').value = '';
     } else if (s === 'importOverlay'){
       $('importErr').textContent = ''; $('importText').value = ''; $('importPrev').textContent = ''; $('importN').value = '1'; $('importSplit').hidden = true;
       setTimeout(function(){ $('importText').focus(); }, 80);
