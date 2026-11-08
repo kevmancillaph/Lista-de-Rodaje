@@ -3038,7 +3038,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
 
   function frame(ts){
     if (!playing) return;
-    var dt = Math.min(0.1, (ts - last) / 1000); last = ts;
+    var dt = Math.max(0, Math.min(0.1, (ts - last) / 1000)); last = ts;
     var prev = pos; pos += speed() * dt;
     for (var si = 0; si < stops.length; si++){ var s0 = stops[si]; if (s0 > prev + 0.001 && s0 <= pos){ pos = s0; sc.scrollTop = s0; stop(); hold = true; label(); return; } }
     var m = maxScroll();
@@ -3060,7 +3060,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
       ctimer = setTimeout(step, 1000);
     })();
   }
-  var startPos = null;
+  var startPos = null, segPos = null;
   function posOf(el){ return Math.max(0, Math.min(maxScroll(), el.offsetTop - parseInt(col.style.paddingTop || '0', 10))); }
   function pendingPos(){
     var kids = col.children;
@@ -3069,6 +3069,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
   function toggle(){
     var resume = hold; hold = false;
+    if (resume) segPos = pos;
     if (counting){ cancelCount(); label(); return; }
     if (playing){ stop(); return; }
     var m = maxScroll();
@@ -3078,10 +3079,10 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   }
   function goBack(){
     hold = false; cancelCount(); stop();
-    pos = startPos !== null ? startPos : pendingPos(); sc.scrollTop = pos; label();
+    pos = segPos !== null ? segPos : startPos !== null ? startPos : pendingPos(); sc.scrollTop = pos; label();
     if (st.count > 0) countdown(st.count); else begin();
   }
-  function restart(){ hold = false; cancelCount(); stop(); startPos = null; pos = pendingPos(); sc.scrollTop = pos; label(); }
+  function restart(){ hold = false; cancelCount(); stop(); startPos = null; segPos = null; pos = pendingPos(); sc.scrollTop = pos; label(); }
 
   function unlockRot(){ try{ if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){} try{ if (screen.orientation && screen.orientation.lock) { var r = screen.orientation.lock('any'); if (r && r.catch) r.catch(function(){}); } }catch(e){} }
   function onRot(){ if (ov.classList.contains('open')) setTimeout(function(){ relayout(ratio()); }, 150); }
@@ -3090,7 +3091,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   function fsOn(){ try{ var f = ov.requestFullscreen || ov.webkitRequestFullscreen; if (f && !(document.fullscreenElement || document.webkitFullscreenElement)){ var r = f.call(ov); if (r && r.catch) r.catch(function(){}); } }catch(e){} }
   function fsOff(){ try{ if (document.fullscreenElement || document.webkitFullscreenElement){ var x = document.exitFullscreen || document.webkitExitFullscreen; var r = x.call(document); if (r && r.catch) r.catch(function(){}); } }catch(e){} }
   function open(){
-    hold = false; startPos = null; fsOn(); unlockRot(); build(); ov.classList.add('open'); layout(); pos = 0; sc.scrollTop = 0; label();
+    hold = false; startPos = null; segPos = null; fsOn(); unlockRot(); build(); ov.classList.add('open'); layout(); pos = 0; sc.scrollTop = 0; label();
     try{ $('tpPlay').focus(); }catch(e){}
   }
   function close(){ hold = false; cancelCount(); stop(); unwake(); closeJump(); ov.classList.remove('open'); fsOff(); }
@@ -3123,7 +3124,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
   function jumpTo(idx){
     var el = col.children[idx]; if (!el) return;
     hold = false; cancelCount(); stop();
-    pos = posOf(el); startPos = pos;
+    pos = posOf(el); startPos = pos; segPos = null;
     sc.scrollTop = pos; closeJump(); label();
   }
 
