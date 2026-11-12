@@ -1716,9 +1716,24 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     }
     return bytesToB64url(raw);
   }
+  /* tema: viaja dentro del link para que quien lo abra vea lo mismo que el autor */
+  var TEMA_KEYS = ['estilo','pal','modo','dest','dint','hc','hcs','nums'];
+  function temaActual(){ var o = {}; TEMA_KEYS.forEach(function(k){ o[k] = settings[k]; }); return o; }
+  function aplicarTema(t){
+    if (!t || typeof t !== 'object') return;
+    if (hasId(ESTILOS, t.estilo)) settings.estilo = t.estilo;
+    if (hasId(PALETAS, t.pal)) settings.pal = t.pal;
+    if (['auto','light','dark'].indexOf(t.modo) >= 0) settings.modo = t.modo;
+    if (typeof t.dest === 'boolean') settings.dest = t.dest;
+    if (typeof t.dint === 'number' && isFinite(t.dint)) settings.dint = Math.min(100, Math.max(20, t.dint));
+    if (typeof t.hc === 'boolean') settings.hc = t.hc;
+    settings.hcs = (Array.isArray(t.hcs) && t.hcs.length === 8 && t.hcs.every(function(c){ return hexRgb(c); })) ? t.hcs.slice() : null;
+    if (typeof t.nums === 'boolean') settings.nums = t.nums;
+    saveSettings(); applyTheme();
+  }
   async function shareProject(proj, mode){
     var data = {
-      title: proj.title, type: typeOf(proj),
+      title: proj.title, type: typeOf(proj), tema: temaActual(),
       speakers: (proj.speakers || []).map(function(s){ return {name:s.name}; }),
       items: proj.items.slice().sort(function(a,b){ return a.order-b.order; }).map(function(it){
         var o = {type: it.type, text: it.text}; if (it.type === 'dialogo') o.speaker = it.speaker; if (it.section) o.section = it.section; return o;
@@ -2568,7 +2583,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     var raw = new URLSearchParams(location.search).get('i');
     if (!raw) return false;
     var proj = null;
-    try{ proj = buildProject(JSON.parse(await decodePayload(raw))); }catch(e){}
+    try{ var dd = JSON.parse(await decodePayload(raw)); proj = buildProject(dd); if (proj) aplicarTema(dd.tema); }catch(e){}
     history.replaceState(null, '', location.pathname + (location.hash || ''));
     if (!proj) return false;
     proj.shared = true;   // recibido por link: sin selector de tipo
@@ -2842,7 +2857,7 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
         if (f){
           var data = await decryptFile(JSON.parse(f.text), m[2]);
           var proj = buildProject(data);
-          if (proj){ proj.shared = true; projects.push(proj); saveProjects(); go(proj.id); return true; }
+          if (proj){ aplicarTema(data.tema); proj.shared = true; projects.push(proj); saveProjects(); go(proj.id); return true; }
         }
       }catch(e){}
       await new Promise(function(ok){ setTimeout(ok, 1500); });
