@@ -1909,6 +1909,67 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
     sorted.splice(pos, 0, it); sorted.forEach(function(x, k){ x.order = k + 1; });
     proj.items.push(it);
   }
+  // selector de tipo al editar una línea: Acción o un hablante (o uno nuevo)
+  function typePicker(proj, it, who, li){
+    var SPC = ['sp-1', 'sp-2', 'sp-3', 'sp-4', 'sp-5', 'sp-6', 'sp-7', 'sp-8'];
+    var st = {type: it.type === 'dialogo' ? 'dialogo' : 'accion', sp: it.speaker || '', extra: []};
+    var box = document.createElement('div'); box.className = 'chips tpick'; box.style.margin = '8px 0 0';
+    var inp = null, addB = null;
+    function key(){ return st.type === 'accion' ? 'a' : 'd:' + st.sp; }
+    function paint(){ Array.prototype.forEach.call(box.querySelectorAll('.chip[data-k]'), function(c){ c.setAttribute('aria-pressed', c.dataset.k === key() ? 'true' : 'false'); }); }
+    function pick(t, name){ st.type = t; st.sp = t === 'dialogo' ? name : ''; li.dataset.type = t; who.classList.remove('time', 'none'); who.textContent = t === 'dialogo' ? name : 'Acción'; paint(); }
+    function chip(label, t, color){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.style.textTransform = 'none';
+      b.dataset.k = t === 'accion' ? 'a' : 'd:' + label;
+      var i = document.createElement('i'); if (color) i.style.background = 'var(--' + color + ')'; b.appendChild(i);
+      b.appendChild(document.createTextNode(label));
+      b.addEventListener('click', function(e){ e.stopPropagation(); pick(t, label); });
+      if (addB) box.insertBefore(b, addB); else box.appendChild(b);
+      return b;
+    }
+    function allSp(){ return (proj.speakers || []).concat(st.extra); }
+    function colorOf(name){ var c = ''; allSp().forEach(function(x){ if (x.name === name) c = x.color; }); return c; }
+    function addSpeaker(){
+      if (!inp) return;
+      var nm = inp.value.trim().slice(0, 30); inp.remove(); inp = null; addB.style.display = '';
+      if (!nm) return;
+      if (!colorOf(nm)){
+        var used = allSp().map(function(x){ return x.color; });
+        var c = SPC.filter(function(x){ return used.indexOf(x) < 0; })[0] || SPC[allSp().length % 8];
+        st.extra.push({name: nm, color: c}); chip(nm, 'dialogo', c);
+      }
+      pick('dialogo', nm);
+    }
+    chip('Acción', 'accion', '');
+    (proj.speakers || []).forEach(function(sp){ chip(sp.name, 'dialogo', sp.color); });
+    if (st.type === 'dialogo' && st.sp && !colorOf(st.sp)) chip(st.sp, 'dialogo', it.color || '');
+    addB = document.createElement('button'); addB.type = 'button'; addB.className = 'chip'; addB.style.textTransform = 'none'; addB.textContent = '+ Hablante';
+    addB.addEventListener('click', function(e){
+      e.stopPropagation(); if (inp) return;
+      inp = document.createElement('input'); inp.type = 'text'; inp.maxLength = 30; inp.placeholder = 'Nombre'; inp.setAttribute('aria-label', 'Nombre del hablante');
+      inp.style.cssText = 'font:inherit;font-size:.85rem;padding:6px 8px;width:9em;color:var(--ink);background:var(--row);border:1px solid var(--line);border-radius:3px';
+      inp.addEventListener('click', function(ev){ ev.stopPropagation(); });
+      inp.addEventListener('keydown', function(ev){ if (ev.key === 'Enter'){ ev.preventDefault(); addSpeaker(); } else if (ev.key === 'Escape'){ ev.preventDefault(); inp.value = ''; addSpeaker(); } });
+      inp.addEventListener('blur', function(){ setTimeout(addSpeaker, 150); });
+      addB.style.display = 'none'; box.insertBefore(inp, addB); inp.focus();
+    });
+    box.appendChild(addB);
+    paint();
+    // aplica la elección a la línea; devuelve true si se agregó un hablante a la lista
+    function apply(){
+      addSpeaker();
+      var added = false;
+      if (st.type === 'dialogo' && st.sp){
+        var c = colorOf(st.sp);
+        if (!(proj.speakers || []).some(function(x){ return x.name === st.sp; })){
+          st.extra.forEach(function(x){ if (x.name === st.sp){ if (!proj.speakers) proj.speakers = []; proj.speakers.push({name: x.name, color: x.color}); added = true; } });
+        }
+        it.type = 'dialogo'; it.speaker = st.sp; it.color = c || it.color || '';
+      } else { it.type = 'accion'; it.speaker = ''; it.color = ''; }
+      return added;
+    }
+    return {el: box, apply: apply};
+  }
   /* ---- mover líneas ---- */
   var sortMode = false, sortProj = null;
   function moveItem(proj, itemId, newIndex){
@@ -2063,13 +2124,14 @@ var e=s.estilo||"clasico";r.setAttribute("data-estilo",e);r.setAttribute("data-p
         var save = document.createElement('button'); save.className = 'btn primary small'; save.textContent = 'Guardar';
         var cancel = document.createElement('button'); cancel.className = 'btn small'; cancel.textContent = 'Cancelar';
         row.appendChild(save); row.appendChild(cancel);
-        body.appendChild(who); body.appendChild(area); body.appendChild(row);
+        var tp = typePicker(proj, it, who, li);
+        body.appendChild(who); body.appendChild(area); body.appendChild(tp.el); body.appendChild(row);
         li.appendChild(n); li.appendChild(body);
         li.addEventListener('click', function(e){ e.stopPropagation(); });
         save.addEventListener('click', function(e){
           e.stopPropagation(); var v = area.value.trim();
-          if (isNew){ if (v) commitPending(proj, v); else pendingNew = null; }
-          else if (v) it.text = v;
+          if (isNew){ if (v){ tp.apply(); commitPending(proj, v); } else pendingNew = null; }
+          else if (v){ it.text = v; tp.apply(); }
           editingItemId = null; saveProjects(); renderDetail(proj);
         });
         cancel.addEventListener('click', function(e){ e.stopPropagation(); if (isNew) pendingNew = null; editingItemId = null; renderDetail(proj); });
